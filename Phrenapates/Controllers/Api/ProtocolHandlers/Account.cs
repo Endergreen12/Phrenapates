@@ -402,7 +402,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     }
                 },
 
-                FriendCode = "SCHALE",
+                FriendCode = "SUS",
             };
         }
 
