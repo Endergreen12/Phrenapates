@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // IntelliSense を使用して、C# デバッグに存在する属性を確認します
+            // 既存の属性の説明にホバーを使用する
+            // 詳細については、https://github.com/dotnet/vscode-csharp/blob/main/debugger-launchjson.md を参照してください。
+            "name": ".NET Core Launch (DevContainer)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // ターゲット フレームワークを変更した場合は、プログラム パスを更新するようにしてください。
+            "program": "${workspaceFolder}/Phrenapates/bin/Debug/net8.0/Phrenapates.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Phrenapates",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "DevContainer"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ]
+}
