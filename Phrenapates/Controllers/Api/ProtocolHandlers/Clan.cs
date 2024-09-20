@@ -88,7 +88,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         AssistRelation = Plana.Database.AssistRelation.Friend,
                         EquipmentDBs = [],
                         WeaponDB = new(),
-                        NickName = "Arona",
+                        NickName = "Plana",
                         UniqueId = 20024,
                     }
                 ],

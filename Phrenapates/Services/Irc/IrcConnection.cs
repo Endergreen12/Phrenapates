@@ -22,12 +22,12 @@ namespace Phrenapates.Services.Irc
 
         public void SendChatMessage(string text)
         {
-            SendChatMessage(text, "Arona", 9009005, 0, IrcMessageType.Chat);
+            SendChatMessage(text, "Plana", 19900006, 0, IrcMessageType.Chat);
         }
 
         public void SendEmote(long stickerId)
         {
-            SendChatMessage("", "Arona", 19009113, stickerId, IrcMessageType.Sticker);
+            SendChatMessage("", "Plana", 19900006, stickerId, IrcMessageType.Sticker);
         }
 
         public void SendChatMessage(string text, string nickname, long pfpCharacterId, long stickerId, IrcMessageType messageType)

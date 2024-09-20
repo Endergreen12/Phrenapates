@@ -99,7 +99,7 @@ namespace Phrenapates.Services.Irc
             {
                 Prefix = "server",
                 ReplyCode = ReplyCode.RPL_WELCOME,
-                Trailing = "Welcome to SCHALE!"
+                Trailing = "Welcome, Sensei."
             }.ToString();
         }
 
@@ -137,7 +137,7 @@ namespace Phrenapates.Services.Irc
             logger.LogDebug($"User {connection.AccountServerId} joined {channel}");
 
             // custom welcome
-            connection.SendChatMessage("Welcome to SCHALE!");
+            connection.SendChatMessage("Welcome, Sensei.");
             connection.SendEmote(2);
         }
 
