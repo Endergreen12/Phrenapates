@@ -76,22 +76,7 @@ namespace Plana.Utils
         public static void AddAllEquipment(IrcConnection connection, bool maxed = true)
         {
             var equipmentExcel = connection.ExcelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
-
-            var allEquipment = equipmentExcel.Select(x =>
-            {
-                return new EquipmentDB()
-                {
-                    UniqueId = x.Id,
-                    Level = 1,
-                    StackCount = x.StackableMax, // ~ 90,000 cap, auto converted if over
-                };
-            }).ToList();
-
-            connection.Account.AddEquipment(connection.Context, [.. allEquipment]);
-            connection.Context.SaveChanges();
-
-            // current character equipment implementation doesn't work
-            /*var characterExcel = connection.ExcelTableService.GetTable<CharacterExcelTable>().UnPack().DataList;
+            var characterExcel = connection.ExcelTableService.GetTable<CharacterExcelTable>().UnPack().DataList;
             var allCharacterEquipment = characterExcel.FindAll(x => connection.Account.Characters.Any(y => y.UniqueId == x.Id)).ToList();
             foreach (var characterEquipmentData in allCharacterEquipment)
             {
@@ -102,18 +87,18 @@ namespace Plana.Utils
                     {
                         UniqueId = equipmentData.Id,
                         Level = maxed ? equipmentData.MaxLevel : 0,
-                        Tier = maxed ? (int)equipmentData.TierInit : 1,
+                        Tier = maxed ? (int)equipmentData.TierInit : 0,
                         StackCount = 1,
                         BoundCharacterServerId = connection.Account.Characters.FirstOrDefault(y => y.UniqueId == characterEquipmentData.Id).ServerId
-                    };
-                });
+                    };                
+                }).ToList();
                 connection.Account.AddEquipment(connection.Context, [.. characterEquipment]);
-                connection.Context.SaveChanges();
+                connection.Context.SaveChanges();    
                 connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterEquipmentData.Id).EquipmentServerIds.Clear();
                 connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterEquipmentData.Id).EquipmentServerIds.AddRange(characterEquipment.Select(x => x.ServerId));
             }
             connection.Context.SaveChanges();
-            */
+            
 
             connection.SendChatMessage("Added all equipment!");
         }
