@@ -6,7 +6,7 @@ using Phrenapates.Services.Irc;
 
 namespace Phrenapates.Commands
 {
-    [CommandHandler("setseason", "Set season of content (raid, arena)", "/setseason [target content] [target season id]")]
+    [CommandHandler("setseason", "Set season of content (raid, arena)", "/setseason <raid|arena> <seasonid>")]
     internal class SetSeason : Command
     {
         public SetSeason(IrcConnection connection, string[] args, bool validate = true) : base(connection, args, validate) { }
@@ -27,13 +27,14 @@ namespace Phrenapates.Commands
                 case "raid":
                     if (long.TryParse(value, out seasonId))
                     {
+                        var raidSeasonName = connection.ExcelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList.FirstOrDefault(x => x.SeasonId == seasonId).OpenRaidBossGroup;
                         connection.Account.RaidInfo = new RaidInfo()
                         {
                             SeasonId = seasonId,
                             BestRankingPoint = 0,
                             TotalRankingPoint = 0,
                         };
-
+                        connection.SendChatMessage($"Raid Season Boss: {string.Join(", ", raidSeasonName)}");
                         connection.SendChatMessage($"Set Raid SeasonId to: {seasonId}");
                         connection.Context.SaveChanges();
                     }
@@ -42,7 +43,10 @@ namespace Phrenapates.Commands
                         throw new ArgumentException("Invalid Value");
                     }
                     break;
-
+                case "arena":
+                    connection.SendChatMessage($"Arena isn't implemented yet!");
+                    connection.Context.SaveChanges();
+                    break;
                 default:
                     throw new ArgumentException("Invalid target!");
             }
