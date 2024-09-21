@@ -270,7 +270,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         { CurrencyTypes.EliminateTicketA, 1 },
                         { CurrencyTypes.EliminateTicketB, 1 },
                         { CurrencyTypes.EliminateTicketC, 1 },
-                        { CurrencyTypes.EliminateTicketD, 1 }
+                        //{ CurrencyTypes.EliminateTicketD, 1 }
                     },
                     UpdateTimeDict = new Dictionary<CurrencyTypes, DateTime>
                     {
@@ -318,7 +318,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         { CurrencyTypes.EliminateTicketA, DateTime.Parse("2024-04-26T19:29:12") },
                         { CurrencyTypes.EliminateTicketB, DateTime.Parse("2024-04-26T19:29:12") },
                         { CurrencyTypes.EliminateTicketC, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.EliminateTicketD, DateTime.Parse("2024-04-26T19:29:12") }
+                        //{ CurrencyTypes.EliminateTicketD, DateTime.Parse("2024-04-26T19:29:12") }
                     }
                 }
             };

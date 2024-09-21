@@ -14,5 +14,14 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 EnterTicket = $"{req.YostarUID}:{req.YostarToken}"
             };
         }
+
+        [ProtocolHandler(Protocol.Queuing_GetTicketGL)]
+        public ResponsePacket GetTicketGLHandler(QueuingGetTicketGLRequest req)
+        {
+            return new QueuingGetTicketGLResponse()
+            {
+                EnterTicket = $"{req.NpSN}:{req.NpToken}"
+            };
+        }
     }
 }

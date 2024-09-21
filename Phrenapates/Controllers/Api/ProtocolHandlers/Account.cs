@@ -53,6 +53,33 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             };
         }
 
+        [ProtocolHandler(Protocol.Account_CheckNexon)]
+        public ResponsePacket CheckNexonHandler(AccountCheckNexonRequest req)
+        {
+            string[] uidToken = req.EnterTicket.Split(':');
+
+            var account = context.GuestAccounts.SingleOrDefault(x =>
+                x.Uid == long.Parse(uidToken[0]) && x.Token == uidToken[1]
+            );
+
+            if (account is null)
+            {
+                return new AccountCheckNexonResponse()
+                {
+                    ResultState = 0,
+                    ResultMessag = "Invalid account (EnterTicket, AccountCheckNexon)"
+                };
+            }
+
+            return new AccountCheckNexonResponse()
+            {
+                ResultState = 1,
+                SessionKey =
+                    sessionKeyService.Create(account.Uid)
+                    ?? new SessionKey() { MxToken = req.EnterTicket }
+            };
+        }
+
         [ProtocolHandler(Protocol.Account_Auth)]
         public ResponsePacket AuthHandler(AccountAuthRequest req)
         {
@@ -67,6 +94,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 return new AccountAuthResponse()
                 {
                     CurrentVersion = req.Version,
+                    TTSCdnUri = "https://ba.dn.nexoncdn.co.kr/tts/version2/",
                     AccountDB = account,
                     StaticOpenConditions = new()
                     {
@@ -190,7 +218,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 .GetTable<DefaultParcelExcelTable>()
                 .UnPack()
                 .DataList
-                .Where(x => x.ParcelType == ParcelType.Currency)
+                .Where(x => x.ParcelType_ == ParcelType.Currency)
                 .ToList();
 
             AccountCurrencyDB accountCurrency = new()
@@ -310,6 +338,19 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         }
 
         [ProtocolHandler(Protocol.Account_CallName)]
+        public ResponsePacket CallnameHandler(AccountCallNameRequest req)
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+
+            account.CallName = req.CallName;
+            account.CallNameKatakana = req.CallNameKatakana;
+            account.CallNameUpdateTime = DateTime.Now;
+            context.SaveChanges();
+
+            return new AccountCallNameResponse() { AccountDB = account };
+        }
+
+        [ProtocolHandler(Protocol.Account_CallName)]
         public ResponsePacket CallNameHandler(AccountCallNameRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
@@ -363,11 +404,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         new() { EventContentId = 900806 },
                         new() { EventContentId = 900808 },
                         new() { EventContentId = 900809 },
-                        new() { EventContentId = 900810 },
+                        /*new() { EventContentId = 900810 },
                         new() { EventContentId = 900812 },
                         new() { EventContentId = 900813 },
                         new() { EventContentId = 900816 },
-                        new() { EventContentId = 900701 },
+                        new() { EventContentId = 900701 },*/
                     ],
                 },
 
@@ -392,6 +433,10 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     ScenarioGroupHistoryDBs = [.. account.ScenarioGroups]
                 },
 
+                ShopGachaRecruitListResponse = new ShopGachaRecruitListResponse()
+                {
+                },
+
                 EliminateRaidLoginResponse = new EliminateRaidLoginResponse()
                 {
                     SeasonType = RaidSeasonType.Open,
@@ -402,7 +447,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     }
                 },
 
-                FriendCode = "SUS",
+                FriendCode = "SCHALE",
             };
         }
 
@@ -527,6 +572,14 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         )
         {
             return new BillingPurchaseListByYostarResponse();
+        }
+
+        [ProtocolHandler(Protocol.Billing_PurchaseListByNexon)]
+        public ResponsePacket Billing_PurchaseListByNexonHandler(
+            BillingPurchaseListByNexonRequest req
+        )
+        {
+            return new BillingPurchaseListByNexonResponse();
         }
 
         [ProtocolHandler(Protocol.MiniGame_MissionList)]

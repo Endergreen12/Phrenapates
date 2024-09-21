@@ -257,7 +257,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             long addExp = 0;
             long previousExp = 0;
             long exp = weapon.Exp;
-            var charWeaponType = characterTable.Find(x => x.Id == targetCharacter.UniqueId).WeaponType;
+            var charWeaponType = characterTable.Find(x => x.Id == targetCharacter.UniqueId).WeaponType_;
             var accountCurrency = account.Currencies.First();
             Dictionary<long, EquipmentDB> equipmentData = [];
 

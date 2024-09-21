@@ -42,12 +42,12 @@ namespace Phrenapates.Services
                     IsPlayableCharacter: true,
                     IsDummy: false,
                     IsNPC: false,
-                    ProductionStep: ProductionStep.Release,
+                    ProductionStep_: ProductionStep.Release,
                 })
                 .ToList();
-            _charaListR = _charaList.Where(x => x.Rarity == Rarity.R).ToList();
-            _charaListSR = _charaList.Where(x => x.Rarity == Rarity.SR).ToList();
-            _charaListSSR = _charaList.Where(x => x.Rarity == Rarity.SSR).ToList();
+            _charaListR = _charaList.Where(x => x.Rarity_ == Rarity.R).ToList();
+            _charaListSR = _charaList.Where(x => x.Rarity_ == Rarity.SR).ToList();
+            _charaListSSR = _charaList.Where(x => x.Rarity_ == Rarity.SSR).ToList();
             _charaListRNormal = _charaListR.Where(x => x.GetStudentType() == StudentType.Normal).ToList();
             _charaListSRNormal = _charaListSR.Where(x => x.GetStudentType() == StudentType.Normal).ToList();
             _charaListSSRNormal = _charaListSSR.Where(x => x.GetStudentType() == StudentType.Normal).ToList();

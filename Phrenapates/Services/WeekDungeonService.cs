@@ -11,7 +11,7 @@ public class WeekDungeonService
     {
         for (int i = 0; i < excel.StarGoal.Count; i++)
         {
-            stageHistory.StarGoalRecord.Add(excel.StarGoal[i], WeekDungeonService.CalcStarGoal(excel.WeekDungeonType,
+            stageHistory.StarGoalRecord.Add(excel.StarGoal[i], WeekDungeonService.CalcStarGoal(excel.WeekDungeonType_,
                 excel.StarGoal[i], excel.StarGoalAmount[i], battleSummary, clearStage));
         }
     }

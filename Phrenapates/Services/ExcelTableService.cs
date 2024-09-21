@@ -40,7 +40,7 @@ namespace Phrenapates.Services
 
             Directory.CreateDirectory(resourceDir);
 
-            var baseUrl = $"https://prod-clientpatch.bluearchiveyostar.com/{Config.Instance.VersionId}/TableBundles/";
+            var baseUrl = $"https://ba.dn.nexoncdn.co.kr/com.nexon.bluearchive/{Config.Instance.VersionId}/Preload/TableBundles/";
             var tableCatalogName = "TableCatalog.bytes";
             var tableCatalogUrl = baseUrl + tableCatalogName;
             var tableCatalogPath = Path.Combine(resourceDir, tableCatalogName);
