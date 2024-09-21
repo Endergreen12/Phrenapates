@@ -4,7 +4,9 @@
 
 ## Build Server
 
-To build the server, join this discord server and get dependencies on #downloads
+To build the server, join this discord server and clone dependencies
+
+See #downloads
 
 https://discord.gg/VfvWtFSZay
 
