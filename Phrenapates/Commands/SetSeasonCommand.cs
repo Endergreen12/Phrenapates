@@ -27,15 +27,19 @@ namespace Phrenapates.Commands
                 case "raid":
                     if (long.TryParse(value, out seasonId))
                     {
-                        var raidSeasonName = connection.ExcelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList.FirstOrDefault(x => x.SeasonId == seasonId).OpenRaidBossGroup;
+                        var raidSeasonName = connection.ExcelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList.FirstOrDefault(x => x.SeasonId == seasonId);
                         connection.Account.RaidInfo = new RaidInfo()
                         {
                             SeasonId = seasonId,
                             BestRankingPoint = 0,
                             TotalRankingPoint = 0,
                         };
-                        connection.SendChatMessage($"Raid Season Boss: {string.Join(", ", raidSeasonName)}");
-                        connection.SendChatMessage($"Set Raid SeasonId to: {seasonId}");
+
+                        connection.SendChatMessage($"Raid Name: {string.Join(", ", raidSeasonName.OpenRaidBossGroup)}");
+                        connection.SendChatMessage($"Raid ID: {raidSeasonName.SeasonId}");
+                        connection.SendChatMessage($"Raid StartTime: {raidSeasonName.SeasonStartData}");
+                        connection.SendChatMessage($"Raid EndTime: {raidSeasonName.SeasonEndData}");
+                        connection.SendChatMessage($"Total Assault Raid is set to {seasonId}");
                         connection.Context.SaveChanges();
                     }
                     else
@@ -44,7 +48,7 @@ namespace Phrenapates.Commands
                     }
                     break;
                 case "arena":
-                    connection.SendChatMessage($"Arena isn't implemented yet!");
+                    connection.SendChatMessage($"Arena command isn't implemented yet!");
                     connection.Context.SaveChanges();
                     break;
                 default:
