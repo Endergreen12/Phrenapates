@@ -76,18 +76,40 @@ namespace Plana.Utils
         public static void AddAllEquipment(IrcConnection connection, bool maxed = true)
         {
             var equipmentExcel = connection.ExcelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
+            
+            if(!maxed)
+            {
+                connection.Context.Equipment.RemoveRange(connection.Context.Equipment.Where(x => x.AccountServerId == connection.AccountServerId));
+                var allEquipment = equipmentExcel.Where(x => x.Wear)
+                .Select(x =>
+                {
+                    return new EquipmentDB()
+                    {
+                        UniqueId = x.Id,
+                        Level = 1,
+                        StackCount = x.StackableMax, // ~ 90,000 cap, auto converted if over
+                    };
+                }).ToList();
+                connection.Account.AddEquipment(connection.Context, [.. allEquipment]);
+                connection.Context.SaveChanges();
+                connection.SendChatMessage("Added/Reset all equipment!");
+                return;
+            }
+
             var characterExcel = connection.ExcelTableService.GetTable<CharacterExcelTable>().UnPack().DataList;
             var allCharacterEquipment = characterExcel.FindAll(x => connection.Account.Characters.Any(y => y.UniqueId == x.Id)).ToList();
             foreach (var characterEquipmentData in allCharacterEquipment)
             {
                 var characterEquipment = characterEquipmentData.EquipmentSlot.Select(x =>
                 {
-                    var equipmentData = equipmentExcel.FirstOrDefault(y => y.EquipmentCategory == x && y.MaxLevel == 65 && y.RecipeId == 0 && y.TierInit == 9);
+                    var equipmentData = equipmentExcel.FirstOrDefault(
+                        y => y.EquipmentCategory == x && y.MaxLevel == 65
+                    );
                     return new EquipmentDB()
                     {
                         UniqueId = equipmentData.Id,
-                        Level = maxed ? equipmentData.MaxLevel : 0,
-                        Tier = maxed ? (int)equipmentData.TierInit : 0,
+                        Level = equipmentData.MaxLevel,
+                        Tier = (int)equipmentData.TierInit,
                         StackCount = 1,
                         BoundCharacterServerId = connection.Account.Characters.FirstOrDefault(y => y.UniqueId == characterEquipmentData.Id).ServerId
                     };                
@@ -127,6 +149,13 @@ namespace Plana.Utils
             var account = connection.Account;
             var context = connection.Context;
 
+            if(!maxed)
+            {
+                context.Weapons.RemoveRange(context.Weapons.Where(x => x.AccountServerId == connection.AccountServerId));
+                context.SaveChanges();
+                return;
+            }
+
             var weaponExcel = connection.ExcelTableService.GetTable<CharacterWeaponExcelTable>().UnPack().DataList;
             // only for current characters
             var allWeapons = account.Characters.Select(x =>
@@ -135,14 +164,14 @@ namespace Plana.Utils
                 {
                     UniqueId = x.UniqueId,
                     BoundCharacterServerId = x.ServerId,
-                    IsLocked = !maxed,
-                    StarGrade = maxed ? weaponExcel.FirstOrDefault(y => y.Id == x.UniqueId).Unlock.TakeWhile(y => y).Count() : 1,
-                    Level = maxed ? 50 : 1
+                    IsLocked = false,
+                    StarGrade = weaponExcel.FirstOrDefault(y => y.Id == x.UniqueId).Unlock.TakeWhile(y => y).Count(),
+                    Level = 50
                 };
             });
 
             account.AddWeapons(context, [.. allWeapons]);
-            context.SaveChanges();
+            
 
             connection.SendChatMessage("Added all weapons!");
         }
@@ -151,17 +180,23 @@ namespace Plana.Utils
         {
             var account = connection.Account;
             var context = connection.Context;
+            if(!maxed)
+            {
+                context.Gears.RemoveRange(context.Gears.Where(x => x.AccountServerId == connection.AccountServerId));
+                context.SaveChanges();
+                return;
+            }
 
             var uniqueGearExcel = connection.ExcelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
 
-            var uniqueGear = uniqueGearExcel.Where(x => x.Tier == 2 && context.Characters.Any(y => y.UniqueId == x.CharacterId)).Select(x => 
+            var uniqueGear = uniqueGearExcel.Where(x => x.Tier == (maxed ? 2 : 1) && context.Characters.Any(y => y.UniqueId == x.CharacterId)).Select(x => 
                 new GearDB()
                 {
                     UniqueId = x.Id,
                     Level = 1,
                     SlotIndex = 4,
                     BoundCharacterServerId = context.Characters.FirstOrDefault(z => z.UniqueId == x.CharacterId).ServerId,
-                    Tier = maxed ? 2 : 1,
+                    Tier = (int)x.Tier,
                     Exp = 0,
                 }
             );
@@ -178,14 +213,15 @@ namespace Plana.Utils
             var context = connection.Context;
 
             var memoryLobbyExcel = connection.ExcelTableService.GetExcelList<MemoryLobbyExcel>("MemoryLobbyDBSchema");
-            var allMemoryLobbies = memoryLobbyExcel.Select(x =>
+            var allMemoryLobbies = memoryLobbyExcel
+            .Where(x => !account.MemoryLobbies.Any(y => y != null && y.MemoryLobbyUniqueId == x.Id))
+            .Select(x =>
             {
                 return new MemoryLobbyDB()
                 {
                     MemoryLobbyUniqueId = x.Id,
                 };
             }).ToList();
-
             account.AddMemoryLobbies(context, [.. allMemoryLobbies]);
             context.SaveChanges();
 
@@ -198,14 +234,15 @@ namespace Plana.Utils
             var context = connection.Context;
 
             var scenarioModeExcel = connection.ExcelTableService.GetExcelList<ScenarioModeExcel>("ScenarioModeDBSchema");
-            var allScenarios = scenarioModeExcel.Select(x =>
+            var allScenarios = scenarioModeExcel
+            .Where(x => !account.Scenarios.Any(y => y != null && y.ScenarioUniqueId == x.ModeId))
+            .Select(x =>
             {
                 return new ScenarioHistoryDB()
                 {
                     ScenarioUniqueId = x.ModeId,
                 };
             }).ToList();
-
             account.AddScenarios(context, [.. allScenarios]);
             context.SaveChanges();
 

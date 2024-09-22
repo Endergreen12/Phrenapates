@@ -23,7 +23,7 @@ namespace Phrenapates.Commands
                 case "addall":
                     InventoryUtils.AddAllCharacters(connection, false);
                     InventoryUtils.AddAllWeapons(connection, false);
-                    InventoryUtils.AddAllEquipment(connection);
+                    InventoryUtils.AddAllEquipment(connection, false);
                     InventoryUtils.AddAllItems(connection);
                     InventoryUtils.AddAllGears(connection, false);
                     InventoryUtils.AddAllMemoryLobbies(connection);
