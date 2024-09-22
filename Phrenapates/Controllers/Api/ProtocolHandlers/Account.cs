@@ -265,22 +265,28 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             account.AddCharacters(context, [.. newCharacters]);
             context.SaveChanges();
 
-            // Create Cafe
+            // Default Cafe
+            var defaultFurnitureCafe = excelTableService
+                .GetTable<DefaultFurnitureExcelTable>()
+                .UnPack()
+                .DataList;
+
             account.Cafes.Add(Cafe.CreateCafe(req.AccountId));
-            var count = 0;
-            foreach(var character in account.Characters)
-            {
-                account.Cafes.FirstOrDefault().CafeVisitCharacterDBs.Add(count, new()
-                {
-                    IsSummon = false,
-                    LastInteractTime = DateTime.MinValue,
-                    UniqueId = character.UniqueId,
-                    ServerId = character.ServerId
-                });
-                count++;
-            }
             context.SaveChanges();
 
+            account.Cafes.FirstOrDefault().FurnitureDBs = defaultFurnitureCafe.Select(x => {
+                return new FurnitureDB()
+                {
+                    UniqueId = x.Id,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    StackCount = 1
+                };
+            }).ToList();
+            context.SaveChanges();
+            
             var favCharacter = defaultCharacters.Find(x => x.FavoriteCharacter);
             if (favCharacter is not null)
             {
@@ -289,8 +295,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             }
             context.SaveChanges();
 			
-	    account.Mails.Add(Mail.CreateMail(req.AccountId));
-	    context.SaveChanges();
+            //Mails
+            account.Mails.Add(Mail.CreateMail(req.AccountId));
+            context.SaveChanges();
 
             return new AccountCreateResponse()
             {

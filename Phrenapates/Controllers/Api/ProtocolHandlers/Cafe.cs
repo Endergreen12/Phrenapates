@@ -2,6 +2,7 @@ using Plana.Database;
 using Plana.FlatData;
 using Plana.NetworkProtocol;
 using Phrenapates.Services;
+using Phrenapates.Utils;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {
@@ -21,6 +22,23 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault();
+            
+            cafeDb.CafeVisitCharacterDBs.Clear();
+            var count = 0;
+            foreach (var character in RandomList.GetRandomList(account.Characters.ToList(), account.Characters.Count < 5 ? account.Characters.Count : new Random().Next(3, 6)))
+            {
+                cafeDb.CafeVisitCharacterDBs.Add(count, 
+                    new CafeCharacterDB()
+                    {
+                        IsSummon = false,
+                        LastInteractTime = DateTime.Now,
+                        UniqueId = character.UniqueId,
+                        ServerId = character.ServerId,
+                    }
+                );
+                count++;
+            };
+
             return new CafeGetInfoResponse()
             {
                 CafeDB = cafeDb,
