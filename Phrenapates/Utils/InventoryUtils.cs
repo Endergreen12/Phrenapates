@@ -192,7 +192,7 @@ namespace Plana.Utils
             var account = connection.Account;
             var context = connection.Context;
 
-            var memoryLobbyExcel = connection.ExcelTableService.GetExcelList<MemoryLobbyExcel>("MemoryLobbyDBSchema");
+            var memoryLobbyExcel = connection.ExcelTableService.GetTable<MemoryLobbyExcelTable>().UnPack().DataList;
             var allMemoryLobbies = memoryLobbyExcel.Select(x =>
             {
                 return new MemoryLobbyDB()
@@ -212,7 +212,7 @@ namespace Plana.Utils
             var account = connection.Account;
             var context = connection.Context;
 
-            var scenarioModeExcel = connection.ExcelTableService.GetExcelList<ScenarioModeExcel>("ScenarioModeDBSchema");
+            var scenarioModeExcel = connection.ExcelTableService.GetTable<ScenarioModeExcelTable>().UnPack().DataList;
             var allScenarios = scenarioModeExcel.Select(x =>
             {
                 return new ScenarioHistoryDB()
