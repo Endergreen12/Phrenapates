@@ -1,4 +1,5 @@
-﻿using Plana.Database;
+﻿using Microsoft.EntityFrameworkCore;
+using Plana.Database;
 using Plana.NetworkProtocol;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
@@ -27,6 +28,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             // Create guest account on here, workaround
             if (!context.GuestAccounts.Any(x => x.Uid == req.NpSN && x.Token == req.NpToken))
             {
+                context.Database.OpenConnection();
+                context.Database.ExecuteSqlRaw("SET IDENTITY_INSERT GuestAccounts ON");
                 context.GuestAccounts.Add(new()
                 {
                     Uid = req.NpSN,
@@ -35,6 +38,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 });
 
                 context.SaveChanges();
+                context.Database.CloseConnection();
             }
 
             return new QueuingGetTicketGLResponse()
