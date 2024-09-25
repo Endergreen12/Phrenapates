@@ -23,7 +23,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             return new MissionSyncResponse()
             {
-                MissionProgressDBs = account.MissionProgresses.ToList()
+                MissionProgressDBs = [.. account.MissionProgresses]
             };
         }
 

@@ -43,10 +43,10 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             return new()
             {
                 AccountServerId = accountId,
-		Type = Plana.FlatData.MailType.System,
+		        Type = MailType.System,
                 UniqueId = 1,
                 Sender = "Plana",
-		Comment = "This is test, Sensei~",
+		        Comment = "This is test, Sensei~",
                 SendDate = DateTime.Now,
                 ExpireDate = DateTime.MaxValue,
             };
