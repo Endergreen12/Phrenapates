@@ -567,11 +567,3 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         }
     }
 }
-
-[ProtocolHandler(Protocol.Account_LinkReward)]
-        public ResponsePacket LinkRewardHandler(AccountLinkRewardRequest req)
-        {
-            return new AccountLinkRewardResponse();
-        }
-    }
-}
