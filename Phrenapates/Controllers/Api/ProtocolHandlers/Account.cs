@@ -611,10 +611,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             return new AccountInvalidateTokenResponse();
         }
-    }
-}
 
-[ProtocolHandler(Protocol.Account_LinkReward)]
+        [ProtocolHandler(Protocol.Account_LinkReward)]
         public ResponsePacket LinkRewardHandler(AccountLinkRewardRequest req)
         {
             return new AccountLinkRewardResponse();
