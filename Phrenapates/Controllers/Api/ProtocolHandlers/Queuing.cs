@@ -28,8 +28,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             // Create guest account on here, workaround
             if (!context.GuestAccounts.Any(x => x.Uid == req.NpSN && x.Token == req.NpToken))
             {
-                context.Database.OpenConnection();
-                context.Database.ExecuteSqlRaw("SET IDENTITY_INSERT GuestAccounts ON");
+                if(context.Database.IsSqlServer())
+                {
+                    context.Database.OpenConnection();
+                    context.Database.ExecuteSqlRaw("SET IDENTITY_INSERT GuestAccounts ON");
+                }
                 context.GuestAccounts.Add(new()
                 {
                     Uid = req.NpSN,
@@ -38,7 +41,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 });
 
                 context.SaveChanges();
-                context.Database.CloseConnection();
+
+                if (context.Database.IsSqlServer())
+                {
+                    context.Database.CloseConnection();
+                }
             }
 
             return new QueuingGetTicketGLResponse()
