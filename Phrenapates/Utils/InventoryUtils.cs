@@ -134,7 +134,7 @@ namespace Plana.Utils
                 {
                     IsNew = true,
                     UniqueId = x.Id,
-                    StackCount = x.StackableMax
+                    StackCount = x.StackableMax - 100 <= 0 ? 1 : x.StackableMax - 100
                 };
             }).ToList();
 
