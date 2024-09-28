@@ -22,7 +22,31 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault();
+
+            // Cafe Handler stuff
+            cafeDb.LastUpdate = DateTime.Now;
+            cafeDb.LastSummonDate = DateTime.MinValue;
+            cafeDb.FurnitureDBs = account.Furnitures.ToList();
+
+            return new CafeGetInfoResponse()
+            {
+                CafeDB = cafeDb,
+                CafeDBs = [.. account.Cafes],
+                FurnitureDBs = cafeDb.FurnitureDBs
+            };
+        }
+
+        [ProtocolHandler(Protocol.Cafe_Ack)]
+        public ResponsePacket AckHandler(CafeAckRequest req)
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var cafeDb = account.Cafes.FirstOrDefault();
             
+            // Cafe Handler stuff
+            cafeDb.LastUpdate = DateTime.Now;
+            cafeDb.LastSummonDate = DateTime.MinValue;
+
+            // TODO: Implement unowned characters
             cafeDb.CafeVisitCharacterDBs.Clear();
             var count = 0;
             foreach (var character in RandomList.GetRandomList(account.Characters.ToList(), account.Characters.Count < 5 ? account.Characters.Count : new Random().Next(3, 6)))
@@ -38,12 +62,56 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 );
                 count++;
             };
+            context.SaveChanges();
 
-            return new CafeGetInfoResponse()
+            return new CafeAckResponse()
+            {
+                CafeDB = cafeDb
+            };
+        }
+
+        [ProtocolHandler(Protocol.Cafe_Open)]
+        public ResponsePacket OpenHandler(CafeOpenRequest req)
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var cafeDb = account.Cafes.FirstOrDefault(x => x.AccountId == req.AccountId);
+            
+            // Cafe Handler stuff
+            cafeDb.LastUpdate = DateTime.Now;
+            cafeDb.LastSummonDate = DateTime.MinValue;
+
+            context.SaveChanges();
+
+            return new CafeOpenResponse()
+            {
+                OpenedCafeDB = cafeDb,
+                FurnitureDBs = account.Furnitures.ToList()
+            };
+        }
+
+        [ProtocolHandler(Protocol.Cafe_Remove)]
+        public ResponsePacket RemoveHanlder(CafeRemoveFurnitureRequest req)
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var cafeDb = account.Cafes.FirstOrDefault(x => x.AccountId == req.AccountId);
+            
+            // Cafe Handler stuff
+            cafeDb.LastUpdate = DateTime.Now;
+            cafeDb.LastSummonDate = DateTime.MinValue;
+
+            var removedFurniture = new List<FurnitureDB>();
+;
+            foreach (var furniture in req.FurnitureServerIds)
+            {
+                if(account.Furnitures.FirstOrDefault(x => x.CafeDBId == furniture) == null) continue;
+                removedFurniture.Add(account.Furnitures.FirstOrDefault(x => x.CafeDBId == furniture));
+            }
+            context.SaveChanges();
+
+            return new CafeRemoveFurnitureResponse()
             {
                 CafeDB = cafeDb,
-                CafeDBs = account.Cafes.ToList(),
-                FurnitureDBs = cafeDb.FurnitureDBs
+                FurnitureDBs = removedFurniture
             };
         }
 
@@ -58,10 +126,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 LastUpdate = DateTime.Now,
                 LastSummonDate = DateTime.MinValue,
                 CafeVisitCharacterDBs = new(),
-                FurnitureDBs = new()
-                {
-                    new() { UniqueId = 1, }
-                },
+                FurnitureDBs = new(),
                 ProductionAppliedTime = DateTime.Now,
                 ProductionDB = new(),
             };

@@ -265,16 +265,16 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             account.AddCharacters(context, [.. newCharacters]);
             context.SaveChanges();
 
-            // Default Cafe
+            // Cafe
+            account.Cafes.Add(Cafe.CreateCafe(req.AccountId));
+            context.SaveChanges();
+
+            // Default Furniture
             var defaultFurnitureCafe = excelTableService
                 .GetTable<DefaultFurnitureExcelTable>()
                 .UnPack()
                 .DataList;
-
-            account.Cafes.Add(Cafe.CreateCafe(req.AccountId));
-            context.SaveChanges();
-
-            account.Cafes.FirstOrDefault().FurnitureDBs = defaultFurnitureCafe.Select(x => {
+            var newFurnitures = defaultFurnitureCafe.Select(x => {
                 return new FurnitureDB()
                 {
                     UniqueId = x.Id,
@@ -285,6 +285,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     StackCount = 1
                 };
             }).ToList();
+
+            account.AddFurnitures(context, [.. newFurnitures]);
             context.SaveChanges();
             
             var favCharacter = defaultCharacters.Find(x => x.FavoriteCharacter);
