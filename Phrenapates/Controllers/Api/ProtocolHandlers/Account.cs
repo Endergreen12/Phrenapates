@@ -297,7 +297,40 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             }
             context.SaveChanges();
 			
-            //Mails
+            // Mails
+            var defaultMails = excelTableService.GetTable<DefaultMailExcelTable>().UnPack().DataList;
+            var localizeExcel = excelTableService.GetExcelList<LocalizeExcel>("LocalizeDBSchema");
+
+            foreach(var defaultMail in defaultMails)
+            {
+                List<ParcelInfo> parcelInfos = new();
+
+                for(int i = 0; i < defaultMail.RewardParcelType.Count; i++)
+                {
+                    parcelInfos.Add(new()
+                    {
+                        Amount = defaultMail.RewardParcelAmount[i],
+                        Key = new()
+                        {
+                            Type = defaultMail.RewardParcelType[i],
+                            Id = defaultMail.RewardParcelId[i]
+                        }
+                    });
+                }
+
+                account.Mails.Add(new()
+                {
+                    Type = defaultMail.MailType,
+                    UniqueId = -1,
+                    Sender = "プラナ",
+                    Comment = localizeExcel.Where(x => x.Key == defaultMail.LocalizeCodeId).First().Jp,
+                    SendDate = DateTime.Parse(defaultMail.MailSendPeriodFrom),
+                    ExpireDate = DateTime.Parse(defaultMail.MailSendPeriodTo),
+                    ParcelInfos = parcelInfos,
+                    RemainParcelInfos = new()
+                });
+            }
+
             account.Mails.Add(Mail.CreateMail(req.AccountId));
             context.SaveChanges();
 

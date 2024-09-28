@@ -2,6 +2,7 @@
 using Plana.FlatData;
 using Plana.NetworkProtocol;
 using Phrenapates.Services;
+using Plana.Parcel;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {
@@ -37,8 +38,37 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 				MailDBs = account.Mails.ToList()
 			};
 		}
-		
-		public static MailDB CreateMail(long accountId)
+
+        [ProtocolHandler(Protocol.Mail_Receive)]
+        public ResponsePacket RecieveHandler(MailReceiveRequest req)
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+
+            var parcelResultDb = new ParcelResultDB();
+            parcelResultDb.DisplaySequence = new();
+            foreach (var targetMails in req.MailServerIds.Select(x =>
+            {
+                return account.Mails.Where(y => y.ServerId == x).First();
+            }))
+            {
+                ParcelService.AddOrConsumeWithParcel(account, targetMails.ParcelInfos);
+                parcelResultDb.DisplaySequence.AddRange(targetMails.ParcelInfos);
+                account.Mails.Remove(targetMails);
+            }
+            context.SaveChanges();
+
+            parcelResultDb.AccountCurrencyDB = account.Currencies.First();
+            // idk why but currently DisplaySequence causes softlock, so don't send it
+            parcelResultDb.DisplaySequence = new();
+
+            return new MailReceiveResponse()
+            {
+                MailServerIds = req.MailServerIds,
+                ParcelResultDB = parcelResultDb
+            };
+        }
+
+        public static MailDB CreateMail(long accountId)
         {
             return new()
             {
@@ -49,6 +79,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 		        Comment = "This is test, Sensei~",
                 SendDate = DateTime.Now,
                 ExpireDate = DateTime.MaxValue,
+				ParcelInfos = new(),
+				RemainParcelInfos = new(),
             };
         }
 
