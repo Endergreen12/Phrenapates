@@ -274,7 +274,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 .GetTable<DefaultFurnitureExcelTable>()
                 .UnPack()
                 .DataList;
-            var newFurnitures = defaultFurnitureCafe.Select(x => {
+            var newFurnitures = defaultFurnitureCafe.GetRange(0, 2).Select(x => {
                 return new FurnitureDB()
                 {
                     UniqueId = x.Id,
