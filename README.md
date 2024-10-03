@@ -6,9 +6,7 @@
 
 To build the server, join this discord server and clone dependencies
 
-See #downloads
-
-Tutorial for #tutorial
+See tutorial for #tutorial
 
 https://discord.gg/VfvWtFSZay
 

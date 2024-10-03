@@ -26,7 +26,24 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             // Cafe Handler stuff
             cafeDb.LastUpdate = DateTime.Now;
             cafeDb.LastSummonDate = DateTime.MinValue;
+
+            // Data and stuff
             cafeDb.FurnitureDBs = account.Furnitures.ToList();
+            cafeDb.CafeVisitCharacterDBs.Clear();
+            var count = 0;
+            foreach (var character in RandomList.GetRandomList(account.Characters.ToList(), account.Characters.Count < 5 ? account.Characters.Count : new Random().Next(3, 6)))
+            {
+                cafeDb.CafeVisitCharacterDBs.Add(count, 
+                    new CafeCharacterDB()
+                    {
+                        IsSummon = false,
+                        LastInteractTime = DateTime.Now,
+                        UniqueId = character.UniqueId,
+                        ServerId = character.ServerId,
+                    }
+                );
+                count++;
+            };
 
             return new CafeGetInfoResponse()
             {
