@@ -24,5 +24,35 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             };
         }
+
+        [ProtocolHandler(Protocol.EventContent_AdventureList)]
+        public ResponsePacket AdventureListHandler(EventContentAdventureListRequest req)
+        {
+
+            return new EventContentAdventureListResponse()
+            {
+
+            };
+        }
+
+        [ProtocolHandler(Protocol.EventContent_BoxGachaShopList)]
+        public ResponsePacket BoxGachaShopListHandler(EventContentBoxGachaShopListRequest req)
+        {
+
+            return new EventContentBoxGachaShopListResponse()
+            {
+
+            };
+        }
+
+        [ProtocolHandler(Protocol.EventContent_ScenarioGroupHistoryUpdate)]
+        public ResponsePacket ScenarioGroupHistoryUpdateHandler(EventContentScenarioGroupHistoryUpdateRequest req)
+        {
+
+            return new EventContentScenarioGroupHistoryUpdateResponse()
+            {
+
+            };
+        }
     }
 }
