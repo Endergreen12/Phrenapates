@@ -38,8 +38,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 			    {
 			        MailDB = mailDb,
 			        MailDBs = account.Mails.Where(y => y.ReceiptDate is not null).ToList()
-			    }
-			    return;
+			    };
 			}
 			return new MailListResponse()
 			{
@@ -63,7 +62,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             {
                 ParcelService.AddOrConsumeWithParcel(account, targetMails.ParcelInfos);
                 parcelResultDb.DisplaySequence.AddRange(targetMails.ParcelInfos);
-                parcelResultDb.ParcelForMission.AddRange(target Mails.ParcelInfos);
+                parcelResultDb.ParcelForMission.AddRange(targetMails.ParcelInfos);
                 //account.Mails.Remove(targetMails);
                 targetMails.ReceiptDate = DateTime.Now;
             }
@@ -83,32 +82,27 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public static MailDB CreateMail(long accountId)
         {
             List<ParcelInfo> ParcelInfos = new();
-            ParcelInfos.Add(new
+            ParcelInfos.Add(new()
             {
                 Key = new()
                 {
-                    Type = MailType.System,
-                    Id = CurrencyType.GemBonus,
+                    Type = ParcelType.Currency,
+                    Id = 3,
                 }
                 Amount = 600,
                 Multiplier = new(),
                 Probability = new(),
             });
-            var SystemMail = ExcelTableService
-                .GetTable<SystemMailExcelTable>()
-                .UnPack()
-                .Where(y => y.MailType == MailType.System)
-                .First();
             DateTime date = DateTime.Now;
             return new()
             {
                 AccountServerId = accountId,
 		        Type = MailType.System,
                 UniqueId = 2,
-                Sender = SystemMail.Sender,
-		        Comment = SystemMail.Comment,
+                Sender = "UI_MAILBOX_POST_SENDER_ARONA",
+		        Comment = "Mail_NewUserBonus",
                 SendDate = date,
-                ExpireDate = date.AddDays(SystemMail.ExpiredDay),
+                ExpireDate = date.AddDays(7),
 				ParcelInfos = ParcelInfos,
 				RemainParcelInfos = new(),
             };
