@@ -32,10 +32,19 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 		{
 			var account = sessionKeyService.GetAccount(req.SessionKey);
 			var mailDb = account.Mails.FirstOrDefault();
+			if (req.IsReadMail)
+			{
+			    return new MailListResponse()
+			    {
+			        MailDB = mailDb,
+			        MailDBs = account.Mails.Where(y => y.ReceiptDate is not null).ToList()
+			    }
+			    return;
+			}
 			return new MailListResponse()
 			{
 				MailDB = mailDb,
-				MailDBs = account.Mails.ToList()
+				MailDBs = account.Mails.Where(y => y.ReceiptDate is null).ToList()
 			};
 		}
 
@@ -46,6 +55,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             var parcelResultDb = new ParcelResultDB();
             parcelResultDb.DisplaySequence = new();
+            parcelResultDb.ParcelForMission = new();
             foreach (var targetMails in req.MailServerIds.Select(x =>
             {
                 return account.Mails.Where(y => y.ServerId == x).First();
@@ -53,13 +63,15 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             {
                 ParcelService.AddOrConsumeWithParcel(account, targetMails.ParcelInfos);
                 parcelResultDb.DisplaySequence.AddRange(targetMails.ParcelInfos);
-                account.Mails.Remove(targetMails);
+                parcelResultDb.ParcelForMission.AddRange(target Mails.ParcelInfos);
+                //account.Mails.Remove(targetMails);
+                targetMails.ReceiptDate = DateTime.Now;
             }
             context.SaveChanges();
 
             parcelResultDb.AccountCurrencyDB = account.Currencies.First();
             // idk why but currently DisplaySequence causes softlock, so don't send it
-            parcelResultDb.DisplaySequence = new();
+            //parcelResultDb.DisplaySequence = new();
 
             return new MailReceiveResponse()
             {
@@ -70,16 +82,34 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
         public static MailDB CreateMail(long accountId)
         {
+            List<ParcelInfo> ParcelInfos = new();
+            ParcelInfos.Add(new
+            {
+                Key = new()
+                {
+                    Type = MailType.System,
+                    Id = CurrencyType.GemBonus,
+                }
+                Amount = 600,
+                Multiplier = new(),
+                Probability = new(),
+            });
+            var SystemMail = ExcelTableService
+                .GetTable<SystemMailExcelTable>()
+                .UnPack()
+                .Where(y => y.MailType == MailType.System)
+                .First();
+            DateTime date = DateTime.Now;
             return new()
             {
                 AccountServerId = accountId,
 		        Type = MailType.System,
-                UniqueId = 1,
-                Sender = "Plana",
-		        Comment = "This is test, Sensei~",
-                SendDate = DateTime.Now,
-                ExpireDate = DateTime.MaxValue,
-				ParcelInfos = new(),
+                UniqueId = 2,
+                Sender = SystemMail.Sender,
+		        Comment = SystemMail.Comment,
+                SendDate = date,
+                ExpireDate = date.AddDays(SystemMail.ExpiredDay),
+				ParcelInfos = ParcelInfos,
 				RemainParcelInfos = new(),
             };
         }

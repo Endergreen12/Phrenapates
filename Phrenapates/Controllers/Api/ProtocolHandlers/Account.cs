@@ -314,7 +314,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         {
                             Type = defaultMail.RewardParcelType[i],
                             Id = defaultMail.RewardParcelId[i]
-                        }
+                        },
+                        Multiplier = new(),
+                        Probability = new()
                     });
                 }
 
