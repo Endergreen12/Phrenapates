@@ -52,9 +52,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
-            var parcelResultDb = new ParcelResultDB();
-            parcelResultDb.DisplaySequence = new();
-            parcelResultDb.ParcelForMission = new();
+            var parcelResultDb = new ParcelResultDB
+            {
+                DisplaySequence = [],
+                ParcelForMission = []
+            };
             foreach (var targetMails in req.MailServerIds.Select(x =>
             {
                 return account.Mails.Where(y => y.ServerId == x).First();
@@ -81,18 +83,20 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
         public static MailDB CreateMail(long accountId)
         {
-            List<ParcelInfo> ParcelInfos = new();
-            ParcelInfos.Add(new()
-            {
-                Key = new()
+            List<ParcelInfo> ParcelInfos =
+            [
+                new()
                 {
-                    Type = ParcelType.Currency,
-                    Id = 3,
-                }
-                Amount = 600,
-                Multiplier = new(),
-                Probability = new(),
-            });
+                    Key = new()
+                    {
+                        Type = ParcelType.Currency,
+                        Id = 3,
+                    },
+                    Amount = 600,
+                    Multiplier = new(),
+                    Probability = new(),
+                },
+            ];
             DateTime date = DateTime.Now;
             return new()
             {
@@ -104,7 +108,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 SendDate = date,
                 ExpireDate = date.AddDays(7),
 				ParcelInfos = ParcelInfos,
-				RemainParcelInfos = new(),
+				RemainParcelInfos = [],
             };
         }
 
