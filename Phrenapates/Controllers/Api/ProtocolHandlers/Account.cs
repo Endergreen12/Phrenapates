@@ -266,7 +266,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             context.SaveChanges();
 
             // Cafe
-            account.Cafes.Add(Cafe.CreateCafe(req.AccountId));
+            account.Cafes.Add(Cafe.CreateCafe(req.AccountId, [.. account.Characters]));
             context.SaveChanges();
 
             // Default Furniture
@@ -274,14 +274,16 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 .GetTable<DefaultFurnitureExcelTable>()
                 .UnPack()
                 .DataList;
-            var newFurnitures = defaultFurnitureCafe.GetRange(0, 2).Select(x => {
+            var newFurnitures = defaultFurnitureCafe.GetRange(0, 3).Select((x, index) => {
                 return new FurnitureDB()
                 {
+                    CafeDBId = 1,
                     UniqueId = x.Id,
                     Location = x.Location,
                     PositionX = x.PositionX,
                     PositionY = x.PositionY,
                     Rotation = x.Rotation,
+                    ItemDeploySequence = index,
                     StackCount = 1
                 };
             }).ToList();

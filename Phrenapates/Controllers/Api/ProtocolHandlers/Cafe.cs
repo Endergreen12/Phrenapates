@@ -28,7 +28,22 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             cafeDb.LastSummonDate = DateTime.MinValue;
 
             // Data and stuff
-            cafeDb.FurnitureDBs = account.Furnitures.ToList();
+            cafeDb.FurnitureDBs = account.Furnitures.Select(x => 
+                {
+                    return new FurnitureDB()
+                    {
+                        CafeDBId = x.CafeDBId,
+                        UniqueId = x.UniqueId,
+                        Location = x.Location,
+                        PositionX = x.PositionX,
+                        PositionY = x.PositionY,
+                        Rotation = x.Rotation,
+                        ItemDeploySequence = x.ItemDeploySequence,
+                        StackCount = x.StackCount
+                    };
+                }
+            ).ToList();
+
             cafeDb.CafeVisitCharacterDBs.Clear();
             var count = 0;
             foreach (var character in RandomList.GetRandomList(account.Characters.ToList(), account.Characters.Count < 5 ? account.Characters.Count : new Random().Next(3, 6)))
@@ -44,6 +59,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 );
                 count++;
             };
+            context.SaveChanges();
 
             return new CafeGetInfoResponse()
             {
@@ -92,10 +108,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault(x => x.AccountId == req.AccountId);
-            
-            // Cafe Handler stuff
-            cafeDb.LastUpdate = DateTime.Now;
-            cafeDb.LastSummonDate = DateTime.MinValue;
 
             context.SaveChanges();
 
@@ -111,13 +123,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault(x => x.AccountId == req.AccountId);
-            
-            // Cafe Handler stuff
-            cafeDb.LastUpdate = DateTime.Now;
-            cafeDb.LastSummonDate = DateTime.MinValue;
 
             var removedFurniture = new List<FurnitureDB>();
-;
+
             foreach (var furniture in req.FurnitureServerIds)
             {
                 if(account.Furnitures.FirstOrDefault(x => x.CafeDBId == furniture) == null) continue;
@@ -132,20 +140,44 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             };
         }
 
-        public static CafeDB CreateCafe(long accountId)
+        public static CafeDB CreateCafe(long accountId, List<CharacterDB> defaultCharacters)
         {
             return new()
             {
                 CafeDBId = 0,
-                CafeId = 0,
+                CafeId = 1,
                 AccountId = accountId,
-                CafeRank = 0,
+                CafeRank = 10,
                 LastUpdate = DateTime.Now,
                 LastSummonDate = DateTime.MinValue,
-                CafeVisitCharacterDBs = new(),
-                FurnitureDBs = new(),
+                CafeVisitCharacterDBs = [],
+                FurnitureDBs = [],
                 ProductionAppliedTime = DateTime.Now,
-                ProductionDB = new(),
+                ProductionDB = new()
+                {
+                    CafeDBId = 1,
+                    AppliedDate = DateTime.Now,
+                    ComfortValue = 5500,
+                    ProductionParcelInfos =
+                    [
+                        new CafeProductionParcelInfo()
+                        {
+                            Key = {
+                                Type = ParcelType.Currency,
+                                Id = 1,
+                            },
+                            Amount = 9999999
+                        },
+                        new CafeProductionParcelInfo()
+                        {
+                            Key = {
+                                Type = ParcelType.Currency,
+                                Id = 5
+                            },
+                            Amount = 9999999
+                        },
+                    ]
+                },
             };
         }
     }
