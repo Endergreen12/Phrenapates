@@ -277,13 +277,13 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var newFurnitures = defaultFurnitureCafe.GetRange(0, 3).Select((x, index) => {
                 return new FurnitureDB()
                 {
-                    CafeDBId = 1,
+                    CafeDBId = 0,
                     UniqueId = x.Id,
                     Location = x.Location,
                     PositionX = x.PositionX,
                     PositionY = x.PositionY,
                     Rotation = x.Rotation,
-                    ItemDeploySequence = index,
+                    ItemDeploySequence = index + 1,
                     StackCount = 1
                 };
             }).ToList();

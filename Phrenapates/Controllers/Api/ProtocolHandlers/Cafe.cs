@@ -28,21 +28,28 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             cafeDb.LastSummonDate = DateTime.MinValue;
 
             // Data and stuff
-            cafeDb.FurnitureDBs = account.Furnitures.Select(x => 
+            cafeDb.FurnitureDBs = account.Furnitures
+            .Select(x => {
+                return new FurnitureDB()
                 {
-                    return new FurnitureDB()
-                    {
-                        CafeDBId = x.CafeDBId,
-                        UniqueId = x.UniqueId,
-                        Location = x.Location,
-                        PositionX = x.PositionX,
-                        PositionY = x.PositionY,
-                        Rotation = x.Rotation,
-                        ItemDeploySequence = x.ItemDeploySequence,
-                        StackCount = x.StackCount
-                    };
-                }
-            ).ToList();
+                    CafeDBId = x.CafeDBId,
+                    UniqueId = x.UniqueId,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = x.ItemDeploySequence,
+                    StackCount = x.StackCount
+                };
+            }).ToList();
+
+            /*
+            // Print stuff
+            foreach (var furniture in cafeDb.FurnitureDBs)
+            {
+                Console.WriteLine($"CafeDBId: {furniture.CafeDBId}, UID: {furniture.UniqueId}, ServerID: {furniture.ServerId}, ItemDeploySequence: {furniture.ItemDeploySequence}");
+            }
+            */
 
             cafeDb.CafeVisitCharacterDBs.Clear();
             var count = 0;
@@ -59,7 +66,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 );
                 count++;
             };
-            context.SaveChanges();
+
+            //Mission_Sync cancel the transition to cafe
+            //context.SaveChanges();
 
             return new CafeGetInfoResponse()
             {
@@ -72,6 +81,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.Cafe_Ack)]
         public ResponsePacket AckHandler(CafeAckRequest req)
         {
+            // Unable to make the client send this protocol.
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault();
             
@@ -137,6 +147,32 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             {
                 CafeDB = cafeDb,
                 FurnitureDBs = removedFurniture
+            };
+        }
+
+        [ProtocolHandler(Protocol.Cafe_Deploy)]
+        public ResponsePacket DeployHandler(CafeDeployFurnitureRequest req)
+        {
+            return new CafeDeployFurnitureResponse()
+            {
+
+            };
+        }
+
+        [ProtocolHandler(Protocol.Cafe_UpdatePresetFurniture)]
+        public ResponsePacket UpdatePresetFurnitureHandler(CafeUpdatePresetFurnitureRequest req)
+        {
+            return new CafeUpdatePresetFurnitureResponse()
+            {
+
+            };
+        }
+        [ProtocolHandler(Protocol.Cafe_GiveGift)]
+        public ResponsePacket CafeGiveGiftHandler(CafeGiveGiftRequest req)
+        {
+            return new CafeGiveGiftResponse()
+            {
+
             };
         }
 
