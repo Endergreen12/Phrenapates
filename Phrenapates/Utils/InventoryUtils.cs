@@ -249,6 +249,37 @@ namespace Plana.Utils
             connection.SendChatMessage("Added all Scenarios!");
         }
 
+        public static void AddAllFurnitures(IrcConnection connection)
+        {
+            //Disable for now due to cafe mission sync
+            var account = connection.Account;
+            var context = connection.Context;
+
+            var furnitureExcel = connection.ExcelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
+            var defaultFurnitureExcel = connection.ExcelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
+            
+            var allFurnitures = furnitureExcel
+            .Where(x => 
+                !account.Furnitures.Any(y => y != null && y.UniqueId == x.Id) &&      
+                !defaultFurnitureExcel.Any(z => z.Id == x.Id)
+            )
+            .Select(x =>
+            {
+                return new FurnitureDB()
+                {
+                    CafeDBId = account.Cafes.FirstOrDefault().CafeDBId,
+                    Location = FurnitureLocation.Inventory,
+                    UniqueId = x.Id,
+                    StackCount = x.StackableMax
+                };
+            }).ToList();
+            
+            account.AddFurnitures(context, [.. allFurnitures]);
+            context.SaveChanges();
+
+            connection.SendChatMessage("Added all Furnitures!");
+        }
+
         public static void RemoveAllCharacters(IrcConnection connection) // removing default characters breaks game
         {
             var characterDB = connection.Context.Characters;
@@ -275,6 +306,18 @@ namespace Plana.Utils
             }
 
             connection.SendChatMessage("Removed all characters!");
+        }
+
+        public static void RemoveAllFurnitures(IrcConnection connection)
+        {
+            var furnitureDB = connection.Context.Furnitures;
+            var defaultFurnitureExcel = connection.ExcelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
+
+            var removed = furnitureDB.Where(x => x.AccountServerId == connection.AccountServerId && !defaultFurnitureExcel.Select(x => x.Id).ToList().Contains(x.UniqueId));
+
+            furnitureDB.RemoveRange(removed);
+
+            connection.SendChatMessage("Removed all furnitures!");
         }
 
         public static CharacterDB CreateMaxCharacterFromId(uint characterId)

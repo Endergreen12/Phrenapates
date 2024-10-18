@@ -28,6 +28,7 @@ namespace Phrenapates.Commands
                     InventoryUtils.AddAllGears(connection, false);
                     InventoryUtils.AddAllMemoryLobbies(connection);
                     InventoryUtils.AddAllScenarios(connection);
+                    //InventoryUtils.AddAllFurnitures(connection);
 
                     connection.SendChatMessage("Added Everything!");
                     break;
@@ -40,6 +41,7 @@ namespace Phrenapates.Commands
                     InventoryUtils.AddAllGears(connection);
                     InventoryUtils.AddAllMemoryLobbies(connection);
                     InventoryUtils.AddAllScenarios(connection);
+                    //InventoryUtils.AddAllFurnitures(connection);
 
                     connection.SendChatMessage("Added Everything!");
                     break;
@@ -52,6 +54,7 @@ namespace Phrenapates.Commands
                     context.Gears.RemoveRange(context.Gears.Where(x => x.AccountServerId == connection.AccountServerId));
                     context.MemoryLobbies.RemoveRange(context.MemoryLobbies.Where(x => x.AccountServerId == connection.AccountServerId));
                     context.Scenarios.RemoveRange(context.Scenarios.Where(x => x.AccountServerId == connection.AccountServerId));
+                    //InventoryUtils.RemoveAllFurnitures(connection);
 
                     connection.SendChatMessage("Removed Everything!");
                     break;
