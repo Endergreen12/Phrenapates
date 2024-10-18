@@ -251,7 +251,6 @@ namespace Plana.Utils
 
         public static void AddAllFurnitures(IrcConnection connection)
         {
-            //Disable for now due to cafe mission sync
             var account = connection.Account;
             var context = connection.Context;
 
