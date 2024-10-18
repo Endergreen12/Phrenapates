@@ -8,13 +8,15 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {
     public class Cafe : ProtocolHandlerBase
     {
-        private ISessionKeyService sessionKeyService;
-        private SCHALEContext context;
+        private readonly ISessionKeyService sessionKeyService;
+        private readonly SCHALEContext context;
+        private readonly ExcelTableService excelTableService;
 
-        public Cafe(IProtocolHandlerFactory protocolHandlerFactory, ISessionKeyService _sessionKeyService, SCHALEContext _context) : base(protocolHandlerFactory)
+        public Cafe(IProtocolHandlerFactory protocolHandlerFactory, ISessionKeyService _sessionKeyService, SCHALEContext _context, ExcelTableService _excelTableService) : base(protocolHandlerFactory)
         {
             sessionKeyService = _sessionKeyService;
             context = _context;
+            excelTableService = _excelTableService;
         }
 
         [ProtocolHandler(Protocol.Cafe_Get)]
@@ -27,8 +29,10 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             cafeDb.LastUpdate = DateTime.Now;
             cafeDb.LastSummonDate = DateTime.MinValue;
 
+            var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
+
             // Data and stuff
-            cafeDb.FurnitureDBs = account.Furnitures
+            var furnitures = account.Furnitures
             .Select(x => {
                 return new FurnitureDB()
                 {
@@ -39,17 +43,27 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     PositionY = x.PositionY,
                     Rotation = x.Rotation,
                     ItemDeploySequence = x.ItemDeploySequence,
-                    StackCount = x.StackCount
+                    StackCount = x.StackCount,
+                    ServerId = x.ServerId
                 };
             }).ToList();
 
-            /*
-            // Print stuff
-            foreach (var furniture in cafeDb.FurnitureDBs)
-            {
-                Console.WriteLine($"CafeDBId: {furniture.CafeDBId}, UID: {furniture.UniqueId}, ServerID: {furniture.ServerId}, ItemDeploySequence: {furniture.ItemDeploySequence}");
-            }
-            */
+            cafeDb.FurnitureDBs = furnitures
+            .Where(x => defaultFurnitureExcel.Select(y => y.Id).ToList().Contains(x.UniqueId))
+            .Select(x => {
+                return new FurnitureDB()
+                {
+                    CafeDBId = x.CafeDBId,
+                    UniqueId = x.UniqueId,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = x.ItemDeploySequence,
+                    StackCount = x.StackCount,
+                    ServerId = x.ServerId
+                };
+            }).ToList();
 
             cafeDb.CafeVisitCharacterDBs.Clear();
             var count = 0;
@@ -74,7 +88,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             {
                 CafeDB = cafeDb,
                 CafeDBs = [.. account.Cafes],
-                FurnitureDBs = cafeDb.FurnitureDBs
+                FurnitureDBs = furnitures
             };
         }
 
