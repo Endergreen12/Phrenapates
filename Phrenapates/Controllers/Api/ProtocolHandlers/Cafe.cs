@@ -142,6 +142,27 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             };
         }
 
+        [ProtocolHandler(Protocol.Cafe_RankUp)]
+        public ResponsePacket RankUpHandler(CafeRankUpRequest req)
+        {
+            return new CafeRankUpResponse();
+        }
+
+        [ProtocolHandler(Protocol.Cafe_Deploy)]
+        public ResponsePacket DeployHandler(CafeDeployFurnitureRequest req)
+        {
+            return new CafeDeployFurnitureResponse()
+            {
+
+            };
+        }
+
+        [ProtocolHandler(Protocol.Cafe_Relocate)]
+        public ResponsePacket RelocateHandler(CafeRelocateFurnitureRequest req)
+        {
+            return new CafeRelocateFurnitureResponse();
+        }
+
         [ProtocolHandler(Protocol.Cafe_Remove)]
         public ResponsePacket RemoveHanlder(CafeRemoveFurnitureRequest req)
         {
@@ -164,32 +185,78 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             };
         }
 
-        [ProtocolHandler(Protocol.Cafe_Deploy)]
-        public ResponsePacket DeployHandler(CafeDeployFurnitureRequest req)
+        [ProtocolHandler(Protocol.Cafe_RemoveAll)]
+        public ResponsePacket CafeRemoveAllHandler(CafeRemoveAllFurnitureRequest req)
         {
-            return new CafeDeployFurnitureResponse()
-            {
-
-            };
+            return new CafeRemoveAllFurnitureResponse();
         }
 
-        [ProtocolHandler(Protocol.Cafe_UpdatePresetFurniture)]
-        public ResponsePacket UpdatePresetFurnitureHandler(CafeUpdatePresetFurnitureRequest req)
+        [ProtocolHandler(Protocol.Cafe_SummonCharacter)]
+        public ResponsePacket SummonCharacterHandler(CafeSummonCharacterRequest req)
         {
-            return new CafeUpdatePresetFurnitureResponse()
-            {
-
-            };
+            return new CafeSummonCharacterResponse();
         }
+
+        [ProtocolHandler(Protocol.Cafe_Interact)]
+        public ResponsePacket InteractHandler(CafeInteractWithCharacterRequest req)
+        {
+            return new CafeInteractWithCharacterResponse();
+        }
+
         [ProtocolHandler(Protocol.Cafe_GiveGift)]
         public ResponsePacket CafeGiveGiftHandler(CafeGiveGiftRequest req)
         {
-            return new CafeGiveGiftResponse()
-            {
-
-            };
+            return new CafeGiveGiftResponse();
         }
 
+        [ProtocolHandler(Protocol.Cafe_ReceiveCurrency)]
+        public ResponsePacket ReceiveCurrencyHandler(CafeReceiveCurrencyRequest req)
+        {
+            return new CafeReceiveCurrencyResponse();
+        }
+
+        [ProtocolHandler(Protocol.Cafe_ListPreset)]
+        public ResponsePacket ListPresetHandler(CafeListPresetRequest req)
+        {
+            return new CafeListPresetResponse();
+        }
+
+        [ProtocolHandler(Protocol.Cafe_ApplyPreset)]
+        public ResponsePacket ApplyPresetHandler(CafeApplyPresetRequest req)
+        {
+            return new CafeApplyPresetResponse();
+        }
+        
+        [ProtocolHandler(Protocol.Cafe_ApplyTemplate)]
+        public ResponsePacket ApplyTemplateHandler(CafeApplyTemplateRequest req)
+        {
+            return new CafeApplyTemplateResponse();
+        }
+
+        [ProtocolHandler(Protocol.Cafe_RenamePreset)]
+        public ResponsePacket RenamePresetHandler(CafeRenamePresetRequest req)
+        {
+            return new CafeRenamePresetResponse();
+        }
+
+        [ProtocolHandler(Protocol.Cafe_ClearPreset)]
+        public ResponsePacket ClearPresetHandler(CafeClearPresetRequest req)
+        {
+            return new CafeClearPresetResponse();
+        }
+
+        [ProtocolHandler(Protocol.Cafe_TrophyHistory)]
+        public ResponsePacket TrophyHistoryHandler(CafeTrophyHistoryRequest req)
+        {
+            return new CafeTrophyHistoryResponse();
+        }
+        
+        [ProtocolHandler(Protocol.Cafe_UpdatePresetFurniture)]
+        public ResponsePacket UpdatePresetFurnitureHandler(CafeUpdatePresetFurnitureRequest req)
+        {
+            return new CafeUpdatePresetFurnitureResponse();
+        }
+        
         public static CafeDB CreateCafe(long accountId, List<CharacterDB> defaultCharacters)
         {
             return new()
