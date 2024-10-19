@@ -266,7 +266,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             context.SaveChanges();
 
             // Cafe
-            account.Cafes.Add(Cafe.CreateCafe(req.AccountId, [.. account.Characters]));
+            account.Cafes.Add(Cafe.CreateCafe(req.AccountId));
+            account.Cafes.Add(Cafe.CreateSecondCafe(req.AccountId));
             context.SaveChanges();
 
             // Default Furniture
@@ -274,7 +275,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 .GetTable<DefaultFurnitureExcelTable>()
                 .UnPack()
                 .DataList;
-            var newFurnitures = defaultFurnitureCafe.GetRange(0, 3).Select((x, index) => {
+            var cafeFurnitures = defaultFurnitureCafe.GetRange(0, 3).Select((x, index) => {
                 return new FurnitureDB()
                 {
                     CafeDBId = 0,
@@ -287,8 +288,22 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     StackCount = 1
                 };
             }).ToList();
-
-            account.AddFurnitures(context, [.. newFurnitures]);
+            var secondCafeFurnitures = defaultFurnitureCafe.GetRange(0, 3).Select((x, index) => {
+                return new FurnitureDB()
+                {
+                    CafeDBId = 1,
+                    UniqueId = x.Id,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = index + 1,
+                    StackCount = 1
+                };
+            }).ToList();
+            
+            var combinedFurnitures = cafeFurnitures.Concat(secondCafeFurnitures).ToList();
+            account.AddFurnitures(context, [.. combinedFurnitures]);
             context.SaveChanges();
             
             var favCharacter = defaultCharacters.Find(x => x.FavoriteCharacter);
@@ -531,14 +546,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket ToastListHandler(ToastListRequest req)
         {
             return new ToastListResponse();
-        }
-
-        [ProtocolHandler(Protocol.ContentLog_UIOpenStatistics)]
-        public ResponsePacket ContentLog_UIOpenStatisticsHandler(
-            ContentLogUIOpenStatisticsRequest req
-        )
-        {
-            return new ContentLogUIOpenStatisticsResponse();
         }
 
         [ProtocolHandler(Protocol.Event_RewardIncrease)]

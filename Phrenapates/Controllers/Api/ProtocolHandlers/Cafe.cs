@@ -23,13 +23,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket GetHandler(CafeGetInfoRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
-            var cafeDb = account.Cafes.FirstOrDefault();
+            var cafeDbAll = account.Cafes.ToList();
+            var cafeDbOne = cafeDbAll.FirstOrDefault(x => x.CafeId == 1);
+            var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
 
             // Cafe Handler stuff
-            cafeDb.LastUpdate = DateTime.Now;
-            cafeDb.LastSummonDate = DateTime.MinValue;
-
-            var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
+            cafeDbOne.LastUpdate = DateTime.Now;
 
             // Data and stuff
             var furnitures = account.Furnitures
@@ -48,8 +47,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 };
             }).ToList();
 
-            cafeDb.FurnitureDBs = furnitures
-            .Where(x => defaultFurnitureExcel.Select(y => y.Id).ToList().Contains(x.UniqueId))
+            cafeDbOne.FurnitureDBs = furnitures
+            .Where(x => x.CafeDBId == cafeDbOne.CafeDBId && defaultFurnitureExcel.Select(y => y.Id).ToList().Contains(x.UniqueId))
             .Select(x => {
                 return new FurnitureDB()
                 {
@@ -65,11 +64,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 };
             }).ToList();
 
-            cafeDb.CafeVisitCharacterDBs.Clear();
+            cafeDbOne.CafeVisitCharacterDBs.Clear();
             var count = 0;
             foreach (var character in RandomList.GetRandomList(account.Characters.ToList(), account.Characters.Count < 5 ? account.Characters.Count : new Random().Next(3, 6)))
             {
-                cafeDb.CafeVisitCharacterDBs.Add(count, 
+                cafeDbOne.CafeVisitCharacterDBs.Add(count, 
                     new CafeCharacterDB()
                     {
                         IsSummon = false,
@@ -80,14 +79,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 );
                 count++;
             };
-
-            //Mission_Sync cancel the transition to cafe
-            //context.SaveChanges();
+            context.SaveChanges();
 
             return new CafeGetInfoResponse()
             {
-                CafeDB = cafeDb,
-                CafeDBs = [.. account.Cafes],
+                CafeDB = cafeDbOne,
+                CafeDBs = cafeDbAll,
                 FurnitureDBs = furnitures
             };
         }
@@ -101,7 +98,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             
             // Cafe Handler stuff
             cafeDb.LastUpdate = DateTime.Now;
-            cafeDb.LastSummonDate = DateTime.MinValue;
 
             // TODO: Implement unowned characters
             cafeDb.CafeVisitCharacterDBs.Clear();
@@ -257,7 +253,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             return new CafeUpdatePresetFurnitureResponse();
         }
         
-        public static CafeDB CreateCafe(long accountId, List<CharacterDB> defaultCharacters)
+        public static CafeDB CreateCafe(long accountId)
         {
             return new()
             {
@@ -266,13 +262,13 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 AccountId = accountId,
                 CafeRank = 10,
                 LastUpdate = DateTime.Now,
-                LastSummonDate = DateTime.MinValue,
+                LastSummonDate = DateTimeOffset.Parse("2023-01-01T00:00:00Z").UtcDateTime,
                 CafeVisitCharacterDBs = [],
                 FurnitureDBs = [],
                 ProductionAppliedTime = DateTime.Now,
                 ProductionDB = new()
                 {
-                    CafeDBId = 1,
+                    CafeDBId = 0,
                     AppliedDate = DateTime.Now,
                     ComfortValue = 5500,
                     ProductionParcelInfos =
@@ -281,7 +277,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         {
                             Key = {
                                 Type = ParcelType.Currency,
-                                Id = 1,
+                                Id = (long)CurrencyTypes.Gold,
                             },
                             Amount = 9999999
                         },
@@ -289,10 +285,43 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         {
                             Key = {
                                 Type = ParcelType.Currency,
-                                Id = 5
+                                Id = (long)CurrencyTypes.ActionPoint
+                            },
+                            Amount = 500
+                        },
+                    ]
+                },
+            };
+        }
+
+        public static CafeDB CreateSecondCafe(long accountId)
+        {
+            return new()
+            {
+                CafeDBId = 0,
+                CafeId = 2,
+                AccountId = accountId,
+                CafeRank = 10,
+                LastUpdate = DateTime.Now,
+                LastSummonDate = DateTimeOffset.Parse("2023-01-01T00:00:00Z").UtcDateTime,
+                CafeVisitCharacterDBs = [],
+                FurnitureDBs = [],
+                ProductionAppliedTime = DateTime.Now,
+                ProductionDB = new()
+                {
+                    CafeDBId = 0,
+                    AppliedDate = DateTime.Now,
+                    ComfortValue = 5500,
+                    ProductionParcelInfos =
+                    [
+                        new CafeProductionParcelInfo()
+                        {
+                            Key = {
+                                Type = ParcelType.Currency,
+                                Id = (long)CurrencyTypes.Gold,
                             },
                             Amount = 9999999
-                        },
+                        }
                     ]
                 },
             };

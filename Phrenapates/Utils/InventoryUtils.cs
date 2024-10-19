@@ -266,6 +266,7 @@ namespace Plana.Utils
             {
                 return new FurnitureDB()
                 {
+                    //Furniture on Inventory doesn't have data about its furniture owner
                     CafeDBId = account.Cafes.FirstOrDefault().CafeDBId,
                     Location = FurnitureLocation.Inventory,
                     UniqueId = x.Id,
