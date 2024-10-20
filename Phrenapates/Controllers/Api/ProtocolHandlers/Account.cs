@@ -389,6 +389,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             return new AccountLoginSyncResponse()
             {
+                CafeGetInfoResponse = new CafeGetInfoResponse()
+                {
+                    CafeDB = account.Cafes.FirstOrDefault(x => x.AccountServerId == req.AccountId && x.CafeId == 1),
+                    CafeDBs = account.Cafes.Where(x => x.AccountServerId == req.AccountId).ToList(),
+                    FurnitureDBs = [.. account.Furnitures]
+                },
                 AccountCurrencySyncResponse = new AccountCurrencySyncResponse()
                 {
                     AccountCurrencyDB = account.Currencies.FirstOrDefault()
