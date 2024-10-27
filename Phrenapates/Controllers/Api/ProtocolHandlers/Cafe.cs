@@ -1,6 +1,7 @@
 using Plana.Database;
 using Plana.FlatData;
 using Plana.NetworkProtocol;
+using Plana.Parcel;
 using Phrenapates.Services;
 using Phrenapates.Utils;
 
@@ -94,7 +95,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault();
             
-            // Cafe Handler stuff
             cafeDb.LastUpdate = DateTime.Now;
             if(cafeDb.CafeVisitCharacterDBs.Count == 0)
             {
@@ -147,6 +147,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
+            var furnitureExcel = excelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
 
             var inventoryFurniture = account.Furnitures.FirstOrDefault(x =>
                 x.Location == FurnitureLocation.Inventory &&
@@ -209,6 +210,14 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     ServerId = x.ServerId
                 };
             }).ToList();
+
+            var comfortValue = 0;
+            foreach (var furniture in cafeDb.FurnitureDBs)
+            {
+                comfortValue += (int)furnitureExcel.FirstOrDefault(x => x.Id == furniture.UniqueId).ComfortBonus;
+            }
+            cafeDb.ProductionDB.ComfortValue = comfortValue;
+
             context.SaveChanges();
 
             return new CafeDeployFurnitureResponse()
@@ -230,6 +239,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
+            var furnitureExcel = excelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
+
 
             var removedFurniture = account.Furnitures.FirstOrDefault(x =>
                 x.CafeDBId == req.CafeDBId &&
@@ -259,6 +270,13 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 };
             }).ToList();
 
+            var comfortValue = 0;
+            foreach (var furniture in cafeDb.FurnitureDBs)
+            {
+                comfortValue += (int)furnitureExcel.FirstOrDefault(x => x.Id == furniture.UniqueId).ComfortBonus;
+            }
+            cafeDb.ProductionDB.ComfortValue = comfortValue;
+
             context.SaveChanges();
 
             return new CafeRemoveFurnitureResponse()
@@ -274,6 +292,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
             var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
+            var furnitureExcel = excelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
 
             var removedFurniture = account.Furnitures.Where(x =>
                 x.CafeDBId == req.CafeDBId &&
@@ -304,6 +323,13 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     ServerId = x.ServerId
                 };
             }).ToList();
+
+            var comfortValue = 0;
+            foreach (var furniture in cafeDb.FurnitureDBs)
+            {
+                comfortValue += (int)furnitureExcel.FirstOrDefault(x => x.Id == furniture.UniqueId).ComfortBonus;
+            }
+            cafeDb.ProductionDB.ComfortValue = comfortValue;
             
             context.SaveChanges();
 
@@ -322,9 +348,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var cafeDb = cafeDbAll.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
             var characterData = account.Characters.FirstOrDefault(x => x.ServerId == req.CharacterServerId);
             
-            cafeDb.LastUpdate = DateTime.Now;
             var count = cafeDb.CafeVisitCharacterDBs.Keys.Last();
             count++;
+            cafeDb.LastUpdate = DateTime.Now;
             cafeDb.CafeVisitCharacterDBs.Add(count, 
                 new CafeCharacterDB()
                 {
@@ -345,7 +371,21 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.Cafe_Interact)]
         public ResponsePacket InteractHandler(CafeInteractWithCharacterRequest req)
         {
-            return new CafeInteractWithCharacterResponse();
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var cafeDb = account.Cafes.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
+
+            //No relationship rank handler yet
+
+            cafeDb.LastUpdate = DateTime.Now;
+            cafeDb.CafeVisitCharacterDBs.Values.FirstOrDefault(x => x.UniqueId == req.CharacterId).LastInteractTime = DateTime.Now;
+            context.SaveChanges();
+
+            return new CafeInteractWithCharacterResponse()
+            {
+                CafeDB = cafeDb,
+                CharacterDB = account.Characters.FirstOrDefault(x => x.UniqueId == req.CharacterId),
+                ParcelResultDB = new ParcelResultDB(),
+            };
         }
 
         [ProtocolHandler(Protocol.Cafe_GiveGift)]
@@ -402,7 +442,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             return new CafeUpdatePresetFurnitureResponse();
         }
         
-        public static CafeDB CreateCafe(long accountId)
+        public static CafeDB CreateCafe(long accountId, List<FurnitureDB> furnitures, Dictionary<long, CafeCharacterDB> characters)
         {
             return new()
             {
@@ -412,14 +452,27 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 CafeRank = 10,
                 LastUpdate = DateTime.Now,
                 LastSummonDate = DateTimeOffset.Parse("2023-01-01T00:00:00Z").UtcDateTime,
-                CafeVisitCharacterDBs = [],
-                FurnitureDBs = [],
-                ProductionAppliedTime = DateTime.Now,
+                CafeVisitCharacterDBs = characters,
+                FurnitureDBs = furnitures.Select(x => {
+                    return new FurnitureDB()
+                    {
+                        CafeDBId = x.CafeDBId,
+                        UniqueId = x.UniqueId,
+                        Location = x.Location,
+                        PositionX = x.PositionX,
+                        PositionY = x.PositionY,
+                        Rotation = x.Rotation,
+                        ItemDeploySequence = x.ItemDeploySequence,
+                        StackCount = x.StackCount,
+                        ServerId = x.ServerId
+                    };
+                }).ToList(),
+                ProductionAppliedTime = DateTimeOffset.Parse("2023-01-01T00:00:00Z").UtcDateTime,
                 ProductionDB = new()
                 {
                     CafeDBId = 0,
-                    AppliedDate = DateTime.Now,
-                    ComfortValue = 5500,
+                    AppliedDate = DateTimeOffset.Parse("2023-01-01T00:00:00Z").UtcDateTime,
+                    ComfortValue = 60,
                     ProductionParcelInfos =
                     [
                         new CafeProductionParcelInfo()
@@ -428,7 +481,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                                 Type = ParcelType.Currency,
                                 Id = (long)CurrencyTypes.Gold,
                             },
-                            Amount = 9999999
+                            Amount = 0
                         },
                         new CafeProductionParcelInfo()
                         {
@@ -436,31 +489,44 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                                 Type = ParcelType.Currency,
                                 Id = (long)CurrencyTypes.ActionPoint
                             },
-                            Amount = 500
+                            Amount = 0
                         },
                     ]
                 },
             };
         }
 
-        public static CafeDB CreateSecondCafe(long accountId)
+        public static CafeDB CreateSecondCafe(long accountId, List<FurnitureDB> furnitures, Dictionary<long, CafeCharacterDB> characters)
         {
             return new()
             {
-                CafeDBId = 0,
+                CafeDBId = 1,
                 CafeId = 2,
                 AccountId = accountId,
                 CafeRank = 10,
                 LastUpdate = DateTime.Now,
                 LastSummonDate = DateTimeOffset.Parse("2023-01-01T00:00:00Z").UtcDateTime,
-                CafeVisitCharacterDBs = [],
-                FurnitureDBs = [],
-                ProductionAppliedTime = DateTime.Now,
+                CafeVisitCharacterDBs = characters,
+                FurnitureDBs = furnitures.Select(x => {
+                    return new FurnitureDB()
+                    {
+                        CafeDBId = x.CafeDBId,
+                        UniqueId = x.UniqueId,
+                        Location = x.Location,
+                        PositionX = x.PositionX,
+                        PositionY = x.PositionY,
+                        Rotation = x.Rotation,
+                        ItemDeploySequence = x.ItemDeploySequence,
+                        StackCount = x.StackCount,
+                        ServerId = x.ServerId
+                    };
+                }).ToList(),
+                ProductionAppliedTime = DateTimeOffset.Parse("2023-01-01T00:00:00Z").UtcDateTime,
                 ProductionDB = new()
                 {
-                    CafeDBId = 0,
-                    AppliedDate = DateTime.Now,
-                    ComfortValue = 5500,
+                    CafeDBId = 1,
+                    AppliedDate = DateTimeOffset.Parse("2023-01-01T00:00:00Z").UtcDateTime,
+                    ComfortValue = 60,
                     ProductionParcelInfos =
                     [
                         new CafeProductionParcelInfo()
@@ -469,7 +535,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                                 Type = ParcelType.Currency,
                                 Id = (long)CurrencyTypes.Gold,
                             },
-                            Amount = 9999999
+                            Amount = 0
                         }
                     ]
                 },

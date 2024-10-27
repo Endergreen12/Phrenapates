@@ -265,11 +265,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             account.AddCharacters(context, [.. newCharacters]);
             context.SaveChanges();
 
-            // Cafe
-            account.Cafes.Add(Cafe.CreateCafe(req.AccountId));
-            account.Cafes.Add(Cafe.CreateSecondCafe(req.AccountId));
-            context.SaveChanges();
-
             // Default Furniture
             var defaultFurnitureCafe = excelTableService
                 .GetTable<DefaultFurnitureExcelTable>()
@@ -297,13 +292,35 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     PositionX = x.PositionX,
                     PositionY = x.PositionY,
                     Rotation = x.Rotation,
-                    ItemDeploySequence = index + 1,
+                    ItemDeploySequence = index + 4,
                     StackCount = 1
                 };
             }).ToList();
             
             var combinedFurnitures = cafeFurnitures.Concat(secondCafeFurnitures).ToList();
             account.AddFurnitures(context, [.. combinedFurnitures]);
+            context.SaveChanges();
+
+            // Character Cafe
+            var count = 0;
+            Dictionary<long, CafeCharacterDB> CafeVisitCharacterDBs = [];
+            foreach (var character in account.Characters)
+            {
+                CafeVisitCharacterDBs.Add(count, 
+                    new CafeCharacterDB()
+                    {
+                        IsSummon = false,
+                        UniqueId = character.UniqueId,
+                        ServerId = character.ServerId,
+                        LastInteractTime = DateTime.Now
+                    }
+                );
+                count++;
+            };
+
+            // Cafe
+            account.Cafes.Add(Cafe.CreateCafe(req.AccountId, account.Furnitures.ToList().GetRange(0, 3), CafeVisitCharacterDBs));
+            account.Cafes.Add(Cafe.CreateSecondCafe(req.AccountId, account.Furnitures.ToList().GetRange(3, 3), CafeVisitCharacterDBs));
             context.SaveChanges();
             
             var favCharacter = defaultCharacters.Find(x => x.FavoriteCharacter);
