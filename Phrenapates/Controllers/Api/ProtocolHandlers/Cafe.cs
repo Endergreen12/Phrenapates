@@ -351,6 +351,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var count = cafeDb.CafeVisitCharacterDBs.Keys.Last();
             count++;
             cafeDb.LastUpdate = DateTime.Now;
+            cafeDb.LastSummonDate = DateTime.Now;
             cafeDb.CafeVisitCharacterDBs.Add(count, 
                 new CafeCharacterDB()
                 {
