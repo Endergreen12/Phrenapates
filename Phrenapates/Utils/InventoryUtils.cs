@@ -87,7 +87,7 @@ namespace Plana.Utils
                     {
                         UniqueId = x.Id,
                         Level = 1,
-                        StackCount = x.StackableMax, // ~ 90,000 cap, auto converted if over
+                        StackCount = (long)Math.Floor((double)x.StackableMax / 2), // ~ 90,000 cap, auto converted if over
                     };
                 }).ToList();
                 connection.Account.AddEquipment(connection.Context, [.. allEquipment]);
