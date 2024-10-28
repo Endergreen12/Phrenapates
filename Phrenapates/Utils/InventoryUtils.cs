@@ -80,8 +80,7 @@ namespace Plana.Utils
             if(!maxed)
             {
                 connection.Context.Equipment.RemoveRange(connection.Context.Equipment.Where(x => x.AccountServerId == connection.AccountServerId));
-                var allEquipment = equipmentExcel.Where(x => x.Wear)
-                .Select(x =>
+                var allEquipment = equipmentExcel.Select(x =>
                 {
                     return new EquipmentDB()
                     {
@@ -120,7 +119,6 @@ namespace Plana.Utils
                 connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterEquipmentData.Id).EquipmentServerIds.AddRange(characterEquipment.Select(x => x.ServerId));
             }
             connection.Context.SaveChanges();
-            
 
             connection.SendChatMessage("Added all equipment!");
         }
@@ -134,7 +132,7 @@ namespace Plana.Utils
                 {
                     IsNew = true,
                     UniqueId = x.Id,
-                    StackCount = x.StackableMax - 100 <= 0 ? 1 : x.StackableMax - 100
+                    StackCount = x.StackableMax - 100 <= 0 ? 1 : (long)Math.Floor((double)x.StackableMax / 2)
                 };
             }).ToList();
 
