@@ -35,39 +35,63 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var parcelExcel = excelTableService.GetTable<ParcelAutoSynthExcelTable>().UnPack().DataList;
-            Dictionary<long, ItemDB> parcelResult = [];
+            Dictionary<long, ItemDB> itemDBParcel = [];
+            Dictionary<long, EquipmentDB> equipmentDBParcel = [];
 
             foreach (var parcel in req.TargetParcels)
             {
                 var parcelData = parcelExcel.FirstOrDefault(x => x.RequireParcelId == parcel.Id);
-                var itemParcel = account.Items.FirstOrDefault(x => x.UniqueId == parcelData.RequireParcelId);
-
-                double totalItemRemoved = 0;
-                var totalSynthAdded = 0;
-                if(itemParcel.StackCount > parcelData.SynthStartAmount)
+                if(parcelData.RequireParcelType == ParcelType.Item)
                 {
-                    totalItemRemoved = itemParcel.StackCount - parcelData.SynthEndAmount;
-                    totalSynthAdded = (int)Math.Floor(totalItemRemoved / parcelData.RequireParcelAmount);
+                    var itemParcel = account.Items.FirstOrDefault(x => x.UniqueId == parcelData.RequireParcelId);
+
+                    double totalItemRemoved = 0;
+                    var totalSynthAdded = 0;
+                    if(itemParcel.StackCount > parcelData.SynthStartAmount)
+                    {
+                        totalItemRemoved = itemParcel.StackCount - parcelData.SynthEndAmount;
+                        totalSynthAdded = (int)Math.Floor(totalItemRemoved / parcelData.RequireParcelAmount);
+                    }
+
+                    var reducedItem = account.Items.FirstOrDefault(x => x.UniqueId == parcelData.RequireParcelId);
+                    var synthItem = account.Items.FirstOrDefault(x => x.UniqueId == parcelData.ResultParcelId);
+                    reducedItem.StackCount -= (int)totalItemRemoved;
+                    synthItem.StackCount += totalSynthAdded;
+                    itemDBParcel.Remove(reducedItem.UniqueId);
+                    itemDBParcel.Remove(synthItem.UniqueId);
+                    itemDBParcel.Add(reducedItem.UniqueId, reducedItem);
+                    itemDBParcel.Add(synthItem.UniqueId, synthItem);
+                    context.SaveChanges();
                 }
+                else if (parcelData.RequireParcelType == ParcelType.Equipment)
+                {
+                    var equipmentParcel = account.Equipment.FirstOrDefault(x => x.UniqueId == parcelData.RequireParcelId);
 
-                var reducedItem = account.Items.FirstOrDefault(x => x.UniqueId == parcelData.RequireParcelId);
-                var synthItem = account.Items.FirstOrDefault(x => x.UniqueId == parcelData.ResultParcelId);
-                reducedItem.StackCount -= (int)totalItemRemoved;
-                synthItem.StackCount += totalSynthAdded;
-                parcelResult.Remove(reducedItem.UniqueId);
-                parcelResult.Remove(synthItem.UniqueId);
-                parcelResult.Add(reducedItem.UniqueId, reducedItem);
-                parcelResult.Add(synthItem.UniqueId, synthItem);
-                account.Items.FirstOrDefault(x => x.UniqueId == parcelData.RequireParcelId).StackCount = reducedItem.StackCount;
-                account.Items.FirstOrDefault(x => x.UniqueId == parcelData.ResultParcelId).StackCount = synthItem.StackCount;
-                context.SaveChanges();
+                    double totalEquipmentRemoved = 0;
+                    var totalSynthAdded = 0;
+                    if(equipmentParcel.StackCount > parcelData.SynthStartAmount)
+                    {
+                        totalEquipmentRemoved = equipmentParcel.StackCount - parcelData.SynthEndAmount;
+                        totalSynthAdded = (int)Math.Floor(totalEquipmentRemoved / parcelData.RequireParcelAmount);
+                    }
+
+                    var reducedEq = account.Equipment.FirstOrDefault(x => x.UniqueId == parcelData.RequireParcelId);
+                    var synthEq = account.Equipment.FirstOrDefault(x => x.UniqueId == parcelData.ResultParcelId);
+                    reducedEq.StackCount -= (int)totalEquipmentRemoved;
+                    synthEq.StackCount += totalSynthAdded;
+                    equipmentDBParcel.Remove(reducedEq.UniqueId);
+                    equipmentDBParcel.Remove(synthEq.UniqueId);
+                    equipmentDBParcel.Add(reducedEq.UniqueId, reducedEq);
+                    equipmentDBParcel.Add(synthEq.UniqueId, synthEq);
+                    context.SaveChanges();
+                }
             }
-
             return new ItemAutoSynthResponse()
             {
                 ParcelResultDB = new()
                 {
-                    ItemDBs = parcelResult
+                    ItemDBs = itemDBParcel,
+                    EquipmentDBs = equipmentDBParcel
                 }
             };
         }
