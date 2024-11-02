@@ -408,8 +408,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             {
                 CafeGetInfoResponse = new CafeGetInfoResponse()
                 {
-                    CafeDB = account.Cafes.FirstOrDefault(x => x.AccountServerId == req.AccountId && x.CafeId == 1),
-                    CafeDBs = account.Cafes.Where(x => x.AccountServerId == req.AccountId).ToList(),
+                    CafeDB = account.Cafes.FirstOrDefault(x => x.CafeId == 1),
+                    CafeDBs = [.. account.Cafes],
                     FurnitureDBs = [.. account.Furnitures]
                 },
                 AccountCurrencySyncResponse = new AccountCurrencySyncResponse()
@@ -485,7 +485,10 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         { 2041204, int.MaxValue }
                     }
                 },
+                CampaignListResponse = new CampaignListResponse()
+                {
 
+                },
                 FriendCode = "SUS",
             };
         }
