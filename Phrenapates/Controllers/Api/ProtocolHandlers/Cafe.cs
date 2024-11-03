@@ -44,40 +44,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             }).ToList();
 
             cafeDbOne.LastUpdate = DateTime.Now;
-            cafeDbOne.FurnitureDBs = furnitures
-            .Where(x => x.CafeDBId == cafeDbOne.CafeDBId && x.ItemDeploySequence != 0)
-            .Select(x => {
-                return new FurnitureDB()
-                {
-                    CafeDBId = x.CafeDBId,
-                    UniqueId = x.UniqueId,
-                    Location = x.Location,
-                    PositionX = x.PositionX,
-                    PositionY = x.PositionY,
-                    Rotation = x.Rotation,
-                    ItemDeploySequence = x.ItemDeploySequence,
-                    StackCount = x.StackCount,
-                    ServerId = x.ServerId
-                };
-            }).ToList();
-
-            if(cafeDbOne.CafeVisitCharacterDBs.Count == 0)
-            {
-                cafeDbOne.CafeVisitCharacterDBs.Clear();
-                var count = 0;
-                foreach (var character in RandomList.GetRandomList(account.Characters.ToList(), account.Characters.Count < 5 ? account.Characters.Count : new Random().Next(3, 6)))
-                {
-                    cafeDbOne.CafeVisitCharacterDBs.Add(count, 
-                        new CafeCharacterDB()
-                        {
-                            IsSummon = false,
-                            UniqueId = character.UniqueId,
-                            ServerId = character.ServerId,
-                        }
-                    );
-                    count++;
-                };
-            }
             context.SaveChanges();
 
             return new CafeGetInfoResponse()
@@ -96,23 +62,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var cafeDb = account.Cafes.FirstOrDefault();
             
             cafeDb.LastUpdate = DateTime.Now;
-            if(cafeDb.CafeVisitCharacterDBs.Count == 0)
-            {
-                cafeDb.CafeVisitCharacterDBs.Clear();
-                var count = 0;
-                foreach (var character in RandomList.GetRandomList(account.Characters.ToList(), account.Characters.Count < 5 ? account.Characters.Count : new Random().Next(3, 6)))
-                {
-                    cafeDb.CafeVisitCharacterDBs.Add(count, 
-                        new CafeCharacterDB()
-                        {
-                            IsSummon = false,
-                            UniqueId = character.UniqueId,
-                            ServerId = character.ServerId,
-                        }
-                    );
-                    count++;
-                };
-            }
             context.SaveChanges();
 
             return new CafeAckResponse()
@@ -147,7 +96,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
+            var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
             var furnitureExcel = excelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
+            var furnitureTempExcel = excelTableService.GetTable<FurnitureTemplateElementExcelTable>().UnPack().DataList;
 
             var inventoryFurniture = account.Furnitures.FirstOrDefault(x =>
                 x.Location == FurnitureLocation.Inventory &&
@@ -176,6 +127,24 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 x.ItemDeploySequence == 0 &&
                 x.StackCount == 1);
             placedFurniture.ItemDeploySequence = placedFurniture.ServerId;
+
+            // Temporary disabled
+            /*if(furnitureTempExcel.Select(x => x.FurnitureId).Contains(placedFurniture.UniqueId))
+            {
+                var furnitureTemp = account.Furnitures.FirstOrDefault(x => 
+                    defaultFurnitureExcel.GetRange(0, 3).Select(x => x.Id).Contains(x.UniqueId) &&
+                    x.CafeDBId == req.CafeDBId    
+                );
+                furnitureTemp.ItemDeploySequence = 0;
+            }
+            else if(defaultFurnitureExcel.GetRange(0, 3).Select(x => x.Id).Contains(placedFurniture.UniqueId))
+            {
+                var furnitureTemp = account.Furnitures.FirstOrDefault(x => 
+                    furnitureTempExcel.Select(x => x.FurnitureId).Contains(x.UniqueId) &&
+                    x.CafeDBId == req.CafeDBId
+                );
+                account.Furnitures.Remove(furnitureTemp);
+            }*/
             context.SaveChanges();
 
             placedFurniture = new FurnitureDB
@@ -231,7 +200,51 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.Cafe_Relocate)]
         public ResponsePacket RelocateHandler(CafeRelocateFurnitureRequest req)
         {
-            return new CafeRelocateFurnitureResponse();
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var cafeDb = account.Cafes.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
+            var furniture = account.Furnitures.FirstOrDefault(x => x.ItemDeploySequence == req.FurnitureDB.ServerId);
+            cafeDb.FurnitureDBs.Remove(furniture);
+            furniture.PositionX = req.FurnitureDB.PositionX;
+            furniture.PositionY = req.FurnitureDB.PositionY;
+            furniture.Rotation = req.FurnitureDB.Rotation;
+            context.SaveChanges();
+            var relocatedFurniture = new FurnitureDB()
+            {
+                CafeDBId = furniture.CafeDBId,
+                UniqueId = furniture.UniqueId,
+                Location = furniture.Location,
+                PositionX = furniture.PositionX,
+                PositionY = furniture.PositionY,
+                Rotation = furniture.Rotation,
+                StackCount = furniture.StackCount,
+                ItemDeploySequence = furniture.ItemDeploySequence
+            };
+            
+            cafeDb.FurnitureDBs = account.Furnitures
+            .Where(x => 
+                x.CafeDBId == req.CafeDBId &&
+                x.ItemDeploySequence != 0)
+            .Select(x => {
+                return new FurnitureDB()
+                {
+                    CafeDBId = x.CafeDBId,
+                    UniqueId = x.UniqueId,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = x.ItemDeploySequence,
+                    StackCount = x.StackCount,
+                    ServerId = x.ServerId
+                };
+            }).ToList();
+            context.SaveChanges();
+
+            return new CafeRelocateFurnitureResponse()
+            {
+                CafeDB = cafeDb,
+                RelocatedFurnitureDB = relocatedFurniture
+            };
         }
 
         [ProtocolHandler(Protocol.Cafe_Remove)]
@@ -240,7 +253,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
             var furnitureExcel = excelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
-
 
             var removedFurniture = account.Furnitures.FirstOrDefault(x =>
                 x.CafeDBId == req.CafeDBId &&
