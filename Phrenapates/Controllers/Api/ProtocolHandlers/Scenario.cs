@@ -35,12 +35,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket GroupHistoryUpdateHandler(ScenarioGroupHistoryUpdateRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
-            if (!account.ScenarioGroups.Any(x => x.ScenarioGroupUqniueId == req.ScenarioGroupUniqueId))
+            if (!account.ScenarioGroups.Any(x => x.ScenarioGroupUniqueId == req.ScenarioGroupUniqueId))
             {
                 account.ScenarioGroups.Add(new()
                 {
                     AccountServerId = req.AccountId,
-                    ScenarioGroupUqniueId = req.ScenarioGroupUniqueId,
+                    ScenarioGroupUniqueId = req.ScenarioGroupUniqueId,
                     ScenarioType = req.ScenarioType,
                     ClearDateTime = DateTime.Now
                 });
