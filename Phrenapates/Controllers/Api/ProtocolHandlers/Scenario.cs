@@ -50,7 +50,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             return new ScenarioGroupHistoryUpdateResponse()
             {
-                ScenarioGroupHistoryDB = account.ScenarioGroups.First(x => x.ScenarioGroupUqniueId == req.ScenarioGroupUniqueId),
+                ScenarioGroupHistoryDB = account.ScenarioGroups.First(x => x.ScenarioGroupUniqueId == req.ScenarioGroupUniqueId),
             };
         }
         
