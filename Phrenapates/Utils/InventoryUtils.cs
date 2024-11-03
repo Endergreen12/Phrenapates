@@ -232,7 +232,7 @@ namespace Plana.Utils
             var context = connection.Context;
 
             var scenarioModeExcel = connection.ExcelTableService.GetExcelList<ScenarioModeExcel>("ScenarioModeDBSchema");
-            var allScenarios = scenarioModeExcel
+            var normalScenario = scenarioModeExcel
             .Where(x => !account.Scenarios.Any(y => y != null && y.ScenarioUniqueId == x.ModeId))
             .Select(x =>
             {
@@ -241,7 +241,8 @@ namespace Plana.Utils
                     ScenarioUniqueId = x.ModeId,
                 };
             }).ToList();
-            account.AddScenarios(context, [.. allScenarios]);
+            
+            account.AddScenarios(context, [.. normalScenario]);
             context.SaveChanges();
 
             connection.SendChatMessage("Added all Scenarios!");
@@ -308,13 +309,44 @@ namespace Plana.Utils
 
         public static void RemoveAllFurnitures(IrcConnection connection)
         {
+            var account = connection.Account;
             var furnitureDB = connection.Context.Furnitures;
+
             var defaultFurnitureExcel = connection.ExcelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
 
-            var removed = furnitureDB.Where(x => x.AccountServerId == connection.AccountServerId && !defaultFurnitureExcel.Select(x => x.Id).ToList().Contains(x.UniqueId));
-
+            var removed = furnitureDB.Where(x => x.AccountServerId == connection.AccountServerId && !defaultFurnitureExcel.GetRange(0, 3).Select(x => x.Id).ToList().Contains(x.UniqueId));
             furnitureDB.RemoveRange(removed);
 
+            foreach (var furniture in account.Furnitures)
+            {
+                if(furniture.ItemDeploySequence == 0) 
+                {
+                    furniture.ItemDeploySequence = furniture.ServerId;
+                    connection.Context.SaveChanges();
+                }
+            }
+
+            foreach (var cafeDB in account.Cafes)
+            {
+                cafeDB.FurnitureDBs.Clear();
+                var furnitures = account.Furnitures
+                    .Where(x => x.CafeDBId == cafeDB.CafeDBId)
+                    .Select(x => {
+                        return new FurnitureDB()
+                        {
+                            CafeDBId = x.CafeDBId,
+                            UniqueId = x.UniqueId,
+                            Location = x.Location,
+                            PositionX = x.PositionX,
+                            PositionY = x.PositionY,
+                            Rotation = x.Rotation,
+                            StackCount = x.StackCount,
+                            ItemDeploySequence = x.ItemDeploySequence
+                        };
+                    }).ToList();
+                cafeDB.FurnitureDBs.AddRange(furnitures);
+                connection.Context.SaveChanges();
+            }
             connection.SendChatMessage("Removed all furnitures!");
         }
 
