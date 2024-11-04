@@ -485,10 +485,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         { 2041204, int.MaxValue }
                     }
                 },
-                CampaignListResponse = new CampaignListResponse()
-                {
-
-                },
+                
                 FriendCode = "SUS",
             };
         }

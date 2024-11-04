@@ -26,7 +26,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDbAll = account.Cafes.ToList();
             var cafeDbOne = cafeDbAll.FirstOrDefault(x => x.CafeId == 1);
-            var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
 
             var furnitures = account.Furnitures.Select(x => {
                 return new FurnitureDB()
@@ -96,7 +95,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
-            var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
+            var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList.GetRange(0, 3);
             var furnitureExcel = excelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
             var furnitureTempExcel = excelTableService.GetTable<FurnitureTemplateElementExcelTable>().UnPack().DataList;
 
@@ -128,23 +127,28 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 x.StackCount == 1);
             placedFurniture.ItemDeploySequence = placedFurniture.ServerId;
 
-            // Temporary disabled
-            /*if(furnitureTempExcel.Select(x => x.FurnitureId).Contains(placedFurniture.UniqueId))
+            if(furnitureTempExcel.Select(x => x.FurnitureId).Contains(placedFurniture.UniqueId))
             {
                 var furnitureTemp = account.Furnitures.FirstOrDefault(x => 
-                    defaultFurnitureExcel.GetRange(0, 3).Select(x => x.Id).Contains(x.UniqueId) &&
+                    x.Location == req.FurnitureDB.Location &&
                     x.CafeDBId == req.CafeDBId    
                 );
-                furnitureTemp.ItemDeploySequence = 0;
+                if (defaultFurnitureExcel.Select(x => x.Id).Contains(placedFurniture.UniqueId)) 
+                {
+                    furnitureTemp.Location = FurnitureLocation.Inventory;
+                    furnitureTemp.ItemDeploySequence = 0;
+                }
+                else account.Furnitures.Remove(furnitureTemp); 
             }
-            else if(defaultFurnitureExcel.GetRange(0, 3).Select(x => x.Id).Contains(placedFurniture.UniqueId))
+            else if(defaultFurnitureExcel.Select(x => x.Id).Contains(placedFurniture.UniqueId))
             {
-                var furnitureTemp = account.Furnitures.FirstOrDefault(x => 
-                    furnitureTempExcel.Select(x => x.FurnitureId).Contains(x.UniqueId) &&
+                var furniturePerm = account.Furnitures.FirstOrDefault(x => 
+                    x.UniqueId == placedFurniture.UniqueId &&
                     x.CafeDBId == req.CafeDBId
                 );
-                account.Furnitures.Remove(furnitureTemp);
-            }*/
+                furniturePerm.Location = defaultFurnitureExcel.FirstOrDefault(x => x.Id == placedFurniture.UniqueId).Location;
+                furniturePerm.ItemDeploySequence = placedFurniture.ServerId;
+            }
             context.SaveChanges();
 
             placedFurniture = new FurnitureDB
@@ -303,7 +307,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var cafeDb = account.Cafes.FirstOrDefault(x => x.CafeDBId == req.CafeDBId);
-            var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
+            var defaultFurnitureExcel = excelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList.GetRange(0, 3);
             var furnitureExcel = excelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
 
             var removedFurniture = account.Furnitures.Where(x =>
