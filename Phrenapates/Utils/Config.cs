@@ -14,7 +14,7 @@ namespace Phrenapates.Utils
         public string IRCAddress { get; set; } = "127.0.0.1";
         public int IRCPort { get; set; } = 6667;
 
-        public string VersionId { get; set; } = "r73_yim5nra9oql3gg50vfye";
+        public string VersionId { get; set; } = "r73_6chhs5tfm4odqqb24x75";
 
         public static void Load()
         {
