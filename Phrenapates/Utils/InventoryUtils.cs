@@ -6,6 +6,7 @@ using Phrenapates.Services;
 using Phrenapates.Services.Irc;
 using System;
 using System.Data;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Plana.Utils
 {
@@ -256,11 +257,7 @@ namespace Plana.Utils
             var furnitureExcel = connection.ExcelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
             var defaultFurnitureExcel = connection.ExcelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
             
-            var allFurnitures = furnitureExcel
-            .Where(x => 
-                !account.Furnitures.Any(y => y != null && y.UniqueId == x.Id) &&      
-                !defaultFurnitureExcel.Any(z => z.Id == x.Id)
-            )
+            var allFurnitures = furnitureExcel.Where(x => !account.Furnitures.Any(y => y != null && y.UniqueId == x.Id))
             .Select(x =>
             {
                 return new FurnitureDB()
@@ -310,26 +307,48 @@ namespace Plana.Utils
         public static void RemoveAllFurnitures(IrcConnection connection)
         {
             var account = connection.Account;
-            var furnitureDB = connection.Context.Furnitures;
+            var context = connection.Context;
 
             var defaultFurnitureExcel = connection.ExcelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
 
-            var removed = furnitureDB.Where(x => x.AccountServerId == connection.AccountServerId && !defaultFurnitureExcel.GetRange(0, 3).Select(x => x.Id).ToList().Contains(x.UniqueId));
-            furnitureDB.RemoveRange(removed);
+            var removed = context.Furnitures.Where(x => x.AccountServerId == connection.AccountServerId);
+            context.RemoveRange(removed);
+            context.SaveChanges();
 
-            foreach (var furniture in account.Furnitures)
-            {
-                if(furniture.ItemDeploySequence == 0) 
+            /*var cafeFurnitures = defaultFurnitureExcel.GetRange(0, 3).Select((x, index) => {
+                return new FurnitureDB()
                 {
-                    furniture.ItemDeploySequence = furniture.ServerId;
-                    connection.Context.SaveChanges();
-                }
-            }
+                    CafeDBId = 0,
+                    UniqueId = x.Id,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = index + 1,
+                    StackCount = 1
+                };
+            }).ToList();
+            var secondCafeFurnitures = defaultFurnitureExcel.GetRange(0, 3).Select((x, index) => {
+                return new FurnitureDB()
+                {
+                    CafeDBId = 1,
+                    UniqueId = x.Id,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = index + 4,
+                    StackCount = 1
+                };
+            }).ToList();
+            var combinedFurnitures = cafeFurnitures.Concat(secondCafeFurnitures).ToList();
+            context.Furnitures.AddRange(combinedFurnitures);
+            context.SaveChanges();*/
 
             foreach (var cafeDB in account.Cafes)
             {
                 cafeDB.FurnitureDBs.Clear();
-                var furnitures = account.Furnitures
+                /*var furnitures = account.Furnitures
                     .Where(x => x.CafeDBId == cafeDB.CafeDBId)
                     .Select(x => {
                         return new FurnitureDB()
@@ -344,9 +363,9 @@ namespace Plana.Utils
                             ItemDeploySequence = x.ItemDeploySequence
                         };
                     }).ToList();
-                cafeDB.FurnitureDBs.AddRange(furnitures);
-                connection.Context.SaveChanges();
-            }
+                cafeDB.FurnitureDBs.AddRange(furnitures);*/
+            };
+            connection.Context.SaveChanges();
             connection.SendChatMessage("Removed all furnitures!");
         }
 
