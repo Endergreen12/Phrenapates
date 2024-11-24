@@ -293,22 +293,64 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             account.AddCharacters(context, [.. newCharacters]);
             context.SaveChanges();
 
-            // Create Cafe
-            account.Cafes.Add(Cafe.CreateCafe(req.AccountId));
-            var count = 0;
-            foreach(var character in account.Characters)
-            {
-                account.Cafes.FirstOrDefault().CafeVisitCharacterDBs.Add(count, new()
+            // Default Furniture
+            var defaultFurnitureCafe = excelTableService
+                .GetTable<DefaultFurnitureExcelTable>()
+                .UnPack()
+                .DataList;
+            var cafeFurnitures = defaultFurnitureCafe.GetRange(0, 3).Select((x, index) => {
+                return new FurnitureDB()
                 {
-                    IsSummon = false,
-                    LastInteractTime = DateTime.MinValue,
-                    UniqueId = character.UniqueId,
-                    ServerId = character.ServerId
-                });
-                count++;
-            }
+                    CafeDBId = 0,
+                    UniqueId = x.Id,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = index + 1,
+                    StackCount = 1
+                };
+            }).ToList();
+            var secondCafeFurnitures = defaultFurnitureCafe.GetRange(0, 3).Select((x, index) => {
+                return new FurnitureDB()
+                {
+                    CafeDBId = 1,
+                    UniqueId = x.Id,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = index + 4,
+                    StackCount = 1
+                };
+            }).ToList();
+            
+            var combinedFurnitures = cafeFurnitures.Concat(secondCafeFurnitures).ToList();
+            account.AddFurnitures(context, [.. combinedFurnitures]);
             context.SaveChanges();
 
+            // Character Cafe
+            var count = 0;
+            Dictionary<long, CafeCharacterDB> CafeVisitCharacterDBs = [];
+            foreach (var character in account.Characters)
+            {
+                CafeVisitCharacterDBs.Add(count, 
+                    new CafeCharacterDB()
+                    {
+                        IsSummon = false,
+                        UniqueId = character.UniqueId,
+                        ServerId = character.ServerId,
+                        LastInteractTime = DateTime.Now
+                    }
+                );
+                count++;
+            };
+
+            // Cafe
+            account.Cafes.Add(Cafe.CreateCafe(req.AccountId, account.Furnitures.ToList().GetRange(0, 3), CafeVisitCharacterDBs));
+            account.Cafes.Add(Cafe.CreateSecondCafe(req.AccountId, account.Furnitures.ToList().GetRange(3, 3), CafeVisitCharacterDBs));
+            context.SaveChanges();
+            
             var favCharacter = defaultCharacters.Find(x => x.FavoriteCharacter);
             if (favCharacter is not null)
             {
@@ -317,8 +359,44 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             }
             context.SaveChanges();
 			
-	    account.Mails.Add(Mail.CreateMail(req.AccountId));
-	    context.SaveChanges();
+            // Mails
+            var defaultMails = excelTableService.GetTable<DefaultMailExcelTable>().UnPack().DataList;
+            var localizeExcel = excelTableService.GetExcelList<LocalizeExcel>("LocalizeDBSchema");
+
+            foreach(var defaultMail in defaultMails)
+            {
+                List<ParcelInfo> parcelInfos = new();
+
+                for(int i = 0; i < defaultMail.RewardParcelType.Count; i++)
+                {
+                    parcelInfos.Add(new()
+                    {
+                        Amount = defaultMail.RewardParcelAmount[i],
+                        Key = new()
+                        {
+                            Type = defaultMail.RewardParcelType[i],
+                            Id = defaultMail.RewardParcelId[i]
+                        },
+                        Multiplier = new(),
+                        Probability = new()
+                    });
+                }
+
+                account.Mails.Add(new()
+                {
+                    Type = defaultMail.MailType_,
+                    UniqueId = -1,
+                    Sender = "プラナ",
+                    Comment = localizeExcel.Where(x => x.Key == defaultMail.LocalizeCodeId).First().Jp,
+                    SendDate = DateTime.Parse(defaultMail.MailSendPeriodFrom),
+                    ExpireDate = DateTime.Parse(defaultMail.MailSendPeriodTo),
+                    ParcelInfos = parcelInfos,
+                    RemainParcelInfos = new()
+                });
+            }
+
+            account.Mails.Add(Mail.CreateMail(req.AccountId));
+            context.SaveChanges();
 
             return new AccountCreateResponse()
             {
@@ -369,6 +447,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             return new AccountLoginSyncResponse()
             {
+                CafeGetInfoResponse = new CafeGetInfoResponse()
+                {
+                    CafeDB = account.Cafes.FirstOrDefault(x => x.CafeId == 1),
+                    CafeDBs = [.. account.Cafes],
+                    FurnitureDBs = [.. account.Furnitures]
+                },
                 AccountCurrencySyncResponse = new AccountCurrencySyncResponse()
                 {
                     AccountCurrencyDB = account.Currencies.FirstOrDefault()
@@ -404,11 +488,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         new() { EventContentId = 900806 },
                         new() { EventContentId = 900808 },
                         new() { EventContentId = 900809 },
-                        /*new() { EventContentId = 900810 },
+                        new() { EventContentId = 900810 },
                         new() { EventContentId = 900812 },
                         new() { EventContentId = 900813 },
                         new() { EventContentId = 900816 },
-                        new() { EventContentId = 900701 },*/
+                        new() { EventContentId = 900701 },
                     ],
                 },
 
@@ -446,8 +530,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         { 2041204, int.MaxValue }
                     }
                 },
-
-                FriendCode = "SCHALE",
+                
+                FriendCode = "SUS",
             };
         }
 

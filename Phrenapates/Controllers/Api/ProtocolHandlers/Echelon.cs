@@ -34,8 +34,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
             var newEchelon = req.EchelonDB;
-            var existingEchelon = context.Echelons.FirstOrDefault(e => e.AccountServerId == newEchelon.AccountServerId && e.EchelonType == newEchelon.EchelonType &&
-                                                                    e.EchelonNumber == newEchelon.EchelonNumber && e.ExtensionType == newEchelon.ExtensionType);
+            var existingEchelon = context.Echelons.FirstOrDefault(e => 
+                e.AccountServerId == newEchelon.AccountServerId &&
+                e.EchelonType == newEchelon.EchelonType &&
+                e.EchelonNumber == newEchelon.EchelonNumber &&
+                e.ExtensionType == newEchelon.ExtensionType
+            );
 
             if (existingEchelon != null)
             {

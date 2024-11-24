@@ -22,7 +22,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.Scenario_Skip)]
         public ResponsePacket SkipHandler(ScenarioSkipRequest req)
         {
-            return new ScenarioSkipResponse();
+            
+            return new ScenarioSkipResponse()
+            {
+
+            };
         }
 
         [ProtocolHandler(Protocol.Scenario_Select)]
@@ -35,12 +39,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket GroupHistoryUpdateHandler(ScenarioGroupHistoryUpdateRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
-            if (!account.ScenarioGroups.Any(x => x.ScenarioGroupUqniueId == req.ScenarioGroupUniqueId))
+            if (!account.ScenarioGroups.Any(x => x.ScenarioGroupUniqueId == req.ScenarioGroupUniqueId))
             {
                 account.ScenarioGroups.Add(new()
                 {
                     AccountServerId = req.AccountId,
-                    ScenarioGroupUqniueId = req.ScenarioGroupUniqueId,
+                    ScenarioGroupUniqueId = req.ScenarioGroupUniqueId,
                     ScenarioType = req.ScenarioType,
                     ClearDateTime = DateTime.Now
                 });
@@ -50,7 +54,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             return new ScenarioGroupHistoryUpdateResponse()
             {
-                ScenarioGroupHistoryDB = account.ScenarioGroups.First(x => x.ScenarioGroupUqniueId == req.ScenarioGroupUniqueId),
+                ScenarioGroupHistoryDB = account.ScenarioGroups.First(x => x.ScenarioGroupUniqueId == req.ScenarioGroupUniqueId),
             };
         }
         

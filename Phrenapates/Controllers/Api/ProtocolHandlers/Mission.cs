@@ -19,11 +19,21 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.Mission_Sync)]
         public ResponsePacket SyncHandler(MissionSyncRequest req)
         {
-            var account = sessionKeyService.GetAccount(req.SessionKey);
+            // Mission_Sync is called periodically, but if it is called during the execution of a command,
+            // an exception will be raised because the DbContext will be accessed at the same time
+            List<MissionProgressDB> missionList = new();
+            try
+            {
+                missionList = (List<MissionProgressDB>)sessionKeyService.GetAccount(req.SessionKey).MissionProgresses;
+            }
+            catch (Exception ex)
+            {
+
+            }
 
             return new MissionSyncResponse()
             {
-                MissionProgressDBs = account.MissionProgresses.ToList()
+                MissionProgressDBs = missionList
             };
         }
 

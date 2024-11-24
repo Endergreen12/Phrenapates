@@ -117,7 +117,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
         private ArenaTeamSettingDB? GetDefense(long accountId)
         {
-            var defense = context.Echelons.FirstOrDefault(e =>
+            var defense = context.Echelons.OrderBy(e => e.ServerId).LastOrDefault(e =>
                 e.AccountServerId == accountId
                 && e.EchelonType == EchelonType.ArenaDefence
                 && e.EchelonNumber == 1
@@ -196,7 +196,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.Arena_EnterBattlePart1)]
         public ResponsePacket EnterBattlePart1Handler(ArenaEnterBattlePart1Request req)
         {
-            var attack = context.Echelons.First(e =>
+            var attack = context.Echelons.OrderBy(e => e.ServerId).Last(e =>
                 e.AccountServerId == req.AccountId
                 && e.EchelonType == EchelonType.ArenaAttack
                 && e.EchelonNumber == 1

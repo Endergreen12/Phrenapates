@@ -6,6 +6,7 @@ using Phrenapates.Services;
 using Phrenapates.Services.Irc;
 using System;
 using System.Data;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Plana.Utils
 {
@@ -27,7 +28,7 @@ namespace Plana.Utils
                     IsPlayable: true,
                     IsPlayableCharacter: true,
                     IsNPC: false,
-                    ProductionStep_: ProductionStep.Release,
+                    ProductionStep: ProductionStep.Release,
                 }
             )
             .Where(x => !account.Characters.Any(y => y.UniqueId == x.Id))
@@ -76,44 +77,49 @@ namespace Plana.Utils
         public static void AddAllEquipment(IrcConnection connection, bool maxed = true)
         {
             var equipmentExcel = connection.ExcelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
-
-            var allEquipment = equipmentExcel.Select(x =>
+            
+            if(!maxed)
             {
-                return new EquipmentDB()
+                connection.Context.Equipment.RemoveRange(connection.Context.Equipment.Where(x => x.AccountServerId == connection.AccountServerId));
+                var allEquipment = equipmentExcel.Select(x =>
                 {
-                    UniqueId = x.Id,
-                    Level = 1,
-                    StackCount = x.StackableMax, // ~ 90,000 cap, auto converted if over
-                };
-            }).ToList();
+                    return new EquipmentDB()
+                    {
+                        UniqueId = x.Id,
+                        Level = 1,
+                        StackCount = (long)Math.Floor((double)x.StackableMax / 2), // ~ 90,000 cap, auto converted if over
+                    };
+                }).ToList();
+                connection.Account.AddEquipment(connection.Context, [.. allEquipment]);
+                connection.Context.SaveChanges();
+                connection.SendChatMessage("Added/Reset all equipment!");
+                return;
+            }
 
-            connection.Account.AddEquipment(connection.Context, [.. allEquipment]);
-            connection.Context.SaveChanges();
-
-            // current character equipment implementation doesn't work
-            /*var characterExcel = connection.ExcelTableService.GetTable<CharacterExcelTable>().UnPack().DataList;
+            var characterExcel = connection.ExcelTableService.GetTable<CharacterExcelTable>().UnPack().DataList;
             var allCharacterEquipment = characterExcel.FindAll(x => connection.Account.Characters.Any(y => y.UniqueId == x.Id)).ToList();
             foreach (var characterEquipmentData in allCharacterEquipment)
             {
                 var characterEquipment = characterEquipmentData.EquipmentSlot.Select(x =>
                 {
-                    var equipmentData = equipmentExcel.FirstOrDefault(y => y.EquipmentCategory == x && y.MaxLevel == 65 && y.RecipeId == 0 && y.TierInit == 9);
+                    var equipmentData = equipmentExcel.FirstOrDefault(
+                        y => y.EquipmentCategory_ == x && y.MaxLevel == 65
+                    );
                     return new EquipmentDB()
                     {
                         UniqueId = equipmentData.Id,
-                        Level = maxed ? equipmentData.MaxLevel : 0,
-                        Tier = maxed ? (int)equipmentData.TierInit : 1,
+                        Level = equipmentData.MaxLevel,
+                        Tier = (int)equipmentData.TierInit,
                         StackCount = 1,
                         BoundCharacterServerId = connection.Account.Characters.FirstOrDefault(y => y.UniqueId == characterEquipmentData.Id).ServerId
-                    };
-                });
+                    };                
+                }).ToList();
                 connection.Account.AddEquipment(connection.Context, [.. characterEquipment]);
-                connection.Context.SaveChanges();
+                connection.Context.SaveChanges();    
                 connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterEquipmentData.Id).EquipmentServerIds.Clear();
                 connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterEquipmentData.Id).EquipmentServerIds.AddRange(characterEquipment.Select(x => x.ServerId));
             }
             connection.Context.SaveChanges();
-            */
 
             connection.SendChatMessage("Added all equipment!");
         }
@@ -127,7 +133,7 @@ namespace Plana.Utils
                 {
                     IsNew = true,
                     UniqueId = x.Id,
-                    StackCount = x.StackableMax
+                    StackCount = x.StackableMax - 100 <= 0 ? 1 : (long)Math.Floor((double)x.StackableMax / 2)
                 };
             }).ToList();
 
@@ -142,6 +148,13 @@ namespace Plana.Utils
             var account = connection.Account;
             var context = connection.Context;
 
+            if(!maxed)
+            {
+                context.Weapons.RemoveRange(context.Weapons.Where(x => x.AccountServerId == connection.AccountServerId));
+                context.SaveChanges();
+                return;
+            }
+
             var weaponExcel = connection.ExcelTableService.GetTable<CharacterWeaponExcelTable>().UnPack().DataList;
             // only for current characters
             var allWeapons = account.Characters.Select(x =>
@@ -150,14 +163,14 @@ namespace Plana.Utils
                 {
                     UniqueId = x.UniqueId,
                     BoundCharacterServerId = x.ServerId,
-                    IsLocked = !maxed,
-                    StarGrade = maxed ? weaponExcel.FirstOrDefault(y => y.Id == x.UniqueId).Unlock.TakeWhile(y => y).Count() : 1,
-                    Level = maxed ? 50 : 1
+                    IsLocked = false,
+                    StarGrade = weaponExcel.FirstOrDefault(y => y.Id == x.UniqueId).Unlock.TakeWhile(y => y).Count(),
+                    Level = 50
                 };
             });
 
             account.AddWeapons(context, [.. allWeapons]);
-            context.SaveChanges();
+            
 
             connection.SendChatMessage("Added all weapons!");
         }
@@ -166,17 +179,23 @@ namespace Plana.Utils
         {
             var account = connection.Account;
             var context = connection.Context;
+            if(!maxed)
+            {
+                context.Gears.RemoveRange(context.Gears.Where(x => x.AccountServerId == connection.AccountServerId));
+                context.SaveChanges();
+                return;
+            }
 
             var uniqueGearExcel = connection.ExcelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
 
-            var uniqueGear = uniqueGearExcel.Where(x => x.Tier == 2 && context.Characters.Any(y => y.UniqueId == x.CharacterId)).Select(x => 
+            var uniqueGear = uniqueGearExcel.Where(x => x.Tier == (maxed ? 2 : 1) && context.Characters.Any(y => y.UniqueId == x.CharacterId)).Select(x => 
                 new GearDB()
                 {
                     UniqueId = x.Id,
                     Level = 1,
                     SlotIndex = 4,
                     BoundCharacterServerId = context.Characters.FirstOrDefault(z => z.UniqueId == x.CharacterId).ServerId,
-                    Tier = maxed ? 2 : 1,
+                    Tier = (int)x.Tier,
                     Exp = 0,
                 }
             );
@@ -192,15 +211,16 @@ namespace Plana.Utils
             var account = connection.Account;
             var context = connection.Context;
 
-            var memoryLobbyExcel = connection.ExcelTableService.GetTable<MemoryLobbyExcelTable>().UnPack().DataList;
-            var allMemoryLobbies = memoryLobbyExcel.Select(x =>
+            var memoryLobbyExcel = connection.ExcelTableService.GetExcelList<MemoryLobbyExcel>("MemoryLobbyDBSchema");
+            var allMemoryLobbies = memoryLobbyExcel
+            .Where(x => !account.MemoryLobbies.Any(y => y != null && y.MemoryLobbyUniqueId == x.Id))
+            .Select(x =>
             {
                 return new MemoryLobbyDB()
                 {
                     MemoryLobbyUniqueId = x.Id,
                 };
             }).ToList();
-
             account.AddMemoryLobbies(context, [.. allMemoryLobbies]);
             context.SaveChanges();
 
@@ -212,19 +232,48 @@ namespace Plana.Utils
             var account = connection.Account;
             var context = connection.Context;
 
-            var scenarioModeExcel = connection.ExcelTableService.GetTable<ScenarioModeExcelTable>().UnPack().DataList;
-            var allScenarios = scenarioModeExcel.Select(x =>
+            var scenarioModeExcel = connection.ExcelTableService.GetExcelList<ScenarioModeExcel>("ScenarioModeDBSchema");
+            var normalScenario = scenarioModeExcel
+            .Where(x => !account.Scenarios.Any(y => y != null && y.ScenarioUniqueId == x.ModeId))
+            .Select(x =>
             {
                 return new ScenarioHistoryDB()
                 {
                     ScenarioUniqueId = x.ModeId,
                 };
             }).ToList();
-
-            account.AddScenarios(context, [.. allScenarios]);
+            
+            account.AddScenarios(context, [.. normalScenario]);
             context.SaveChanges();
 
             connection.SendChatMessage("Added all Scenarios!");
+        }
+
+        public static void AddAllFurnitures(IrcConnection connection)
+        {
+            var account = connection.Account;
+            var context = connection.Context;
+
+            var furnitureExcel = connection.ExcelTableService.GetTable<FurnitureExcelTable>().UnPack().DataList;
+            var defaultFurnitureExcel = connection.ExcelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
+            
+            var allFurnitures = furnitureExcel.Where(x => !account.Furnitures.Any(y => y != null && y.UniqueId == x.Id))
+            .Select(x =>
+            {
+                return new FurnitureDB()
+                {
+                    //Furniture on Inventory doesn't have data about its furniture owner
+                    CafeDBId = account.Cafes.FirstOrDefault().CafeDBId,
+                    Location = FurnitureLocation.Inventory,
+                    UniqueId = x.Id,
+                    StackCount = x.StackableMax
+                };
+            }).ToList();
+            
+            account.AddFurnitures(context, [.. allFurnitures]);
+            context.SaveChanges();
+
+            connection.SendChatMessage("Added all Furnitures!");
         }
 
         public static void RemoveAllCharacters(IrcConnection connection) // removing default characters breaks game
@@ -253,6 +302,71 @@ namespace Plana.Utils
             }
 
             connection.SendChatMessage("Removed all characters!");
+        }
+
+        public static void RemoveAllFurnitures(IrcConnection connection)
+        {
+            var account = connection.Account;
+            var context = connection.Context;
+
+            var defaultFurnitureExcel = connection.ExcelTableService.GetTable<DefaultFurnitureExcelTable>().UnPack().DataList;
+
+            var removed = context.Furnitures.Where(x => x.AccountServerId == connection.AccountServerId);
+            context.RemoveRange(removed);
+            context.SaveChanges();
+
+            /*var cafeFurnitures = defaultFurnitureExcel.GetRange(0, 3).Select((x, index) => {
+                return new FurnitureDB()
+                {
+                    CafeDBId = 0,
+                    UniqueId = x.Id,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = index + 1,
+                    StackCount = 1
+                };
+            }).ToList();
+            var secondCafeFurnitures = defaultFurnitureExcel.GetRange(0, 3).Select((x, index) => {
+                return new FurnitureDB()
+                {
+                    CafeDBId = 1,
+                    UniqueId = x.Id,
+                    Location = x.Location,
+                    PositionX = x.PositionX,
+                    PositionY = x.PositionY,
+                    Rotation = x.Rotation,
+                    ItemDeploySequence = index + 4,
+                    StackCount = 1
+                };
+            }).ToList();
+            var combinedFurnitures = cafeFurnitures.Concat(secondCafeFurnitures).ToList();
+            context.Furnitures.AddRange(combinedFurnitures);
+            context.SaveChanges();*/
+
+            foreach (var cafeDB in account.Cafes)
+            {
+                cafeDB.FurnitureDBs.Clear();
+                /*var furnitures = account.Furnitures
+                    .Where(x => x.CafeDBId == cafeDB.CafeDBId)
+                    .Select(x => {
+                        return new FurnitureDB()
+                        {
+                            CafeDBId = x.CafeDBId,
+                            UniqueId = x.UniqueId,
+                            Location = x.Location,
+                            PositionX = x.PositionX,
+                            PositionY = x.PositionY,
+                            Rotation = x.Rotation,
+                            StackCount = x.StackCount,
+                            ItemDeploySequence = x.ItemDeploySequence
+                        };
+                    }).ToList();
+                cafeDB.FurnitureDBs.AddRange(furnitures);*/
+            };
+            connection.Context.SaveChanges();
+            connection.SendChatMessage("Removed all furnitures!");
         }
 
         public static CharacterDB CreateMaxCharacterFromId(uint characterId)

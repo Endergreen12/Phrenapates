@@ -138,6 +138,7 @@ namespace Phrenapates.Services.Irc
 
             // custom welcome
             connection.SendChatMessage("Welcome, Sensei.");
+            connection.SendChatMessage("Type /help for more information.");
             connection.SendEmote(2);
         }
 
