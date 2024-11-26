@@ -3,6 +3,7 @@ using Plana.Database.ModelExtensions;
 using Plana.NetworkProtocol;
 using Phrenapates.Services;
 using Serilog;
+using Plana.FlatData;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {
@@ -22,6 +23,17 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.Scenario_Skip)]
         public ResponsePacket SkipHandler(ScenarioSkipRequest req)
         {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var scenarioExcelTable = excelTableService.GetTable<EventContentScenarioExcelTable>().UnPack().DataList;
+            var scenarioData = scenarioExcelTable.Find(x => x.Id == req.ScriptGroupId);
+            /*account.ScenarioGroups.Add(new()
+                {
+                    AccountServerId = req.AccountId,
+                    ScenarioGroupUniqueId = req.ScenarioGroupUniqueId,
+                    ScenarioType = req.,
+                    ClearDateTime = DateTime.Now
+                }
+            );*/
             return new ScenarioSkipResponse();
         }
 
@@ -35,12 +47,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket GroupHistoryUpdateHandler(ScenarioGroupHistoryUpdateRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
-            if (!account.ScenarioGroups.Any(x => x.ScenarioGroupUniqueId == req.ScenarioGroupUniqueId))
+            if (!account.ScenarioGroups.Any(x => x.ScenarioGroupUqniueId == req.ScenarioGroupUniqueId))
             {
                 account.ScenarioGroups.Add(new()
                 {
                     AccountServerId = req.AccountId,
-                    ScenarioGroupUniqueId = req.ScenarioGroupUniqueId,
+                    ScenarioGroupUqniueId = req.ScenarioGroupUniqueId,
                     ScenarioType = req.ScenarioType,
                     ClearDateTime = DateTime.Now
                 });
@@ -50,7 +62,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             return new ScenarioGroupHistoryUpdateResponse()
             {
-                ScenarioGroupHistoryDB = account.ScenarioGroups.First(x => x.ScenarioGroupUniqueId == req.ScenarioGroupUniqueId),
+                ScenarioGroupHistoryDBs = account.ScenarioGroups.ToList()
             };
         }
         
