@@ -77,8 +77,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             var raidStageTable = excelTableService.GetTable<RaidStageExcelTable>().UnPack().DataList;
             var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.RaidInfo.CurrentRaidUniqueId);
-
-            var timeScore = RaidManager.CalculateTimeScore(req.Summary.ElapsedRealtime, account.RaidInfo.CurrentDifficulty);
+            
+            var totalTime = req.Summary.EndFrame/30f;
+            var timeScore = RaidManager.CalculateTimeScore(totalTime, account.RaidInfo.CurrentDifficulty);
             var hpPercentScorePoint = currentRaidData.HPPercentScore;
             var defaultClearPoint = currentRaidData.DefaultClearScore;
 
