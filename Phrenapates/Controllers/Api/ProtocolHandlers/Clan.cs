@@ -1,5 +1,6 @@
 ﻿using Plana.Database;
 using Plana.NetworkProtocol;
+using Plana.FlatData;
 using Phrenapates.Services;
 using Phrenapates.Utils;
 
@@ -47,7 +48,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     AccountLevel = account.Level,
                     ClanDBId = 777,
                     RepresentCharacterUniqueId = 10000,
-                    ClanSocialGrade = Plana.FlatData.ClanSocialGrade.Member,
+                    ClanSocialGrade = ClanSocialGrade.Member,
                     AccountNickName = account.Nickname
                 },
                 ClanMemberDBs = [
@@ -57,7 +58,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         ClanDBId = 777,
                         RepresentCharacterUniqueId = 10000,
                         AttendanceCount = 33,
-                        ClanSocialGrade = Plana.FlatData.ClanSocialGrade.Member,
+                        ClanSocialGrade = ClanSocialGrade.Member,
                         AccountNickName = account.Nickname,
                         AttachmentDB = new() {
                             AccountId = account.ServerId,
@@ -78,24 +79,107 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.Clan_AllAssistList)]
         public ResponsePacket AllAssistListHandler(ClanAllAssistListRequest req)
         {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var equipmentExcel = excelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
+            var weaponExcel = excelTableService.GetTable<CharacterWeaponExcelTable>().UnPack().DataList;
+            var uniqueGearExcel = excelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
+            var characterExcel = excelTableService.GetTable<CharacterExcelTable>().UnPack().DataList.Where(x =>
+                x is
+                {
+                    IsPlayable: true,
+                    IsPlayableCharacter: true,
+                    IsNPC: false,
+                    ProductionStep: ProductionStep.Release,
+                }
+            );
+
+            List<AssistCharacterDB> assistCharData = [];
+            var fakeAssistServerId = 1000000000;
+            var fakeCharServerId = 1000000000;
+            var fakeEqServerId = 1000000000;
+            var fakeWpServerId = 1000000000;
+            var fakeUniqueEqServerId = 1000000000;
+
+            foreach (var character in characterExcel)
+            {
+                // Create assist character data
+                var assistCharacter = new AssistCharacterDB
+                {
+                    // Assist Data
+                    AccountId = 69,
+                    AssistCharacterServerId = fakeAssistServerId,
+                    EchelonType = EchelonType.Raid,
+                    AssistRelation = AssistRelation.Friend,
+                    NickName = "Plana",
+
+                    // Character Data
+                    UniqueId = character.Id,
+                    Level = 90,
+                    Exp = 0,
+                    FavorRank = 20,
+                    FavorExp = 0,
+                    StarGrade = 5,
+                    ExSkillLevel = 5,
+                    PublicSkillLevel = 10,
+                    PassiveSkillLevel = 10,
+                    ExtraPassiveSkillLevel = 10,
+                    LeaderSkillLevel = 1,
+                    IsNew = true,
+                    PotentialStats = { { 1, 0 }, { 2, 0 }, { 3, 0 } },
+
+                    // Some data are nullable, expect empty value.
+                    EquipmentDBs = character.EquipmentSlot.Select(slot =>
+                    {
+                        var equipmentData = equipmentExcel.FirstOrDefault(e => e.EquipmentCategory == slot && e.MaxLevel == 65);
+                        if (equipmentData == null) return new();
+
+                        return new EquipmentDB
+                        {
+                            UniqueId = equipmentData.Id,
+                            Level = equipmentData.MaxLevel,
+                            Tier = (int)equipmentData.TierInit,
+                            IsNew = true,
+                            StackCount = 1,
+                            BoundCharacterServerId = fakeCharServerId,
+                            ServerId = fakeEqServerId++
+                        };
+                    }).ToList(),
+
+                    WeaponDB = weaponExcel.FirstOrDefault(w => w.Id == character.Id) is { Unlock: var unlocks }
+                        ? new WeaponDB
+                        {
+                            UniqueId = character.Id,
+                            IsLocked = false,
+                            StarGrade = unlocks.TakeWhile(unlock => unlock).Count(),
+                            Level = 50,
+                            BoundCharacterServerId = fakeCharServerId,
+                            ServerId = fakeWpServerId++
+                        }
+                        : new(),
+
+                    GearDB = uniqueGearExcel.FirstOrDefault(g => g.CharacterId == character.Id && g.Tier == 2) is { Id: var gearId }
+                        ? new GearDB
+                        {
+                            UniqueId = gearId,
+                            Level = 1,
+                            SlotIndex = 4,
+                            Tier = 2,
+                            Exp = 0,
+                            BoundCharacterServerId = fakeCharServerId,
+                            ServerId = fakeUniqueEqServerId++
+                        }
+                        : new()
+                };
+                assistCharData.Add(assistCharacter);
+                fakeAssistServerId++;
+                fakeCharServerId++;
+            }
+
             return new ClanAllAssistListResponse()
             {
-                AssistCharacterDBs = [
-                    new() {
-                        AccountId = 1,
-                        AssistCharacterServerId = 1,
-                        EchelonType = Plana.FlatData.EchelonType.Raid,
-                        AssistRelation = Plana.Database.AssistRelation.Friend,
-                        EquipmentDBs = [],
-                        WeaponDB = new(),
-                        NickName = "Plana",
-                        UniqueId = 20024,
-                    }
-                ],
+                AssistCharacterDBs = assistCharData,
                 AssistCharacterRentHistoryDBs = []
             };
         }
-
-        
     }
 }
