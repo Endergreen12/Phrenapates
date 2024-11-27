@@ -61,12 +61,24 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var raid = RaidManager.Instance.RaidDB;
             var battle = RaidManager.Instance.RaidBattleDB;
+            AssistCharacterDB assistCharacter = new() {};
+            if (req.AssistUseInfo != null)
+            {
+                assistCharacter = new AssistCharacterDB()
+                {
+                    AccountId = req.AssistUseInfo.CharacterAccountId,
+                    AssistCharacterServerId = req.AssistUseInfo.CharacterDBId,
+                    SlotNumber = req.AssistUseInfo.SlotNumber,
+                    EchelonType = req.AssistUseInfo.EchelonType,
+                    AssistRelation = req.AssistUseInfo.AssistRelation
+                };
+            }
 
             return new RaidEnterBattleResponse()
             {
                 RaidDB = raid,
                 RaidBattleDB = battle,
-                AssistCharacterDB = new() { }
+                AssistCharacterDB = assistCharacter
             };
         }
 
