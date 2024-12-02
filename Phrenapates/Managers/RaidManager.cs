@@ -1,7 +1,5 @@
 ﻿using Plana.Database;
 using Plana.FlatData;
-using Plana.NetworkProtocol;
-using Phrenapates.Controllers.Api.ProtocolHandlers;
 using Phrenapates.Utils;
 
 namespace Phrenapates.Managers
@@ -10,39 +8,50 @@ namespace Phrenapates.Managers
     {
         public SingleRaidLobbyInfoDB RaidLobbyInfoDB { get; private set; }
 
-        public RaidDB RaidDB {  get; private set; }
+        public RaidDB? RaidDB {  get; private set; }
 
         public RaidBattleDB RaidBattleDB { get; private set; }
 
         public SingleRaidLobbyInfoDB GetLobby(RaidInfo raidInfo, RaidSeasonManageExcelT targetSeasonData)
         {
-            if (RaidLobbyInfoDB == null || RaidLobbyInfoDB.SeasonId != raidInfo.SeasonId)
+            if (RaidLobbyInfoDB == null || RaidLobbyInfoDB.SeasonId != raidInfo.RaidDataInfo.SeasonId)
             {
                 RaidLobbyInfoDB = new SingleRaidLobbyInfoDB()
                 {
                     Tier = 0,
                     Ranking = 1,
-                    SeasonId = raidInfo.SeasonId,
+                    SeasonId = raidInfo.RaidDataInfo.SeasonId,
                     BestRankingPoint = 0,
                     TotalRankingPoint = 0,
                     ReceiveRewardIds = targetSeasonData.SeasonRewardId,
                     PlayableHighestDifficulty = new()
                     {
                         { targetSeasonData.OpenRaidBossGroup.FirstOrDefault(), Difficulty.Torment }
-                    }
+                    },
+                    ClanAssistUseInfo = new(),
+                    SeasonStartDate = DateTime.Now.AddHours(-1),
+                    SeasonEndDate = DateTime.Now.AddDays(7),
+                    SettlementEndDate = DateTime.Now.AddMonths(1),
+                    NextSeasonId = 999,
+                    NextSeasonStartDate = DateTime.Parse("2099-01-01T11:00:00"),
+                    NextSeasonEndDate = DateTime.Parse("2099-01-08T03:59:59"),
+                    NextSettlementEndDate = DateTime.Parse("2099-01-08T23:59:59"), 
                 };
             } 
             
             else
             {
-                RaidLobbyInfoDB.BestRankingPoint = raidInfo.BestRankingPoint;
-                RaidLobbyInfoDB.TotalRankingPoint = raidInfo.TotalRankingPoint;
+                RaidLobbyInfoDB.BestRankingPoint = raidInfo.RaidDataInfo.BestRankingPoint;
+                RaidLobbyInfoDB.TotalRankingPoint = raidInfo.RaidDataInfo.TotalRankingPoint;
             }
 
             return RaidLobbyInfoDB;
         }
 
-        public RaidDB CreateRaid(RaidInfo raidInfo, long ownerId, string ownerNickname, bool isPractice, long raidId)
+        public RaidDB CreateRaid(
+            RaidInfo raidInfo,
+            long ownerId, string ownerNickname, int ownerLevel, long characterId,
+            bool isPractice, long raidId, long currentHp)
         {
             if (RaidDB == null)
             {
@@ -52,18 +61,26 @@ namespace Phrenapates.Managers
                     {
                         AccountId = ownerId,
                         AccountName = ownerNickname,
+                        CharacterId = characterId
                     },
-
                     ContentType = ContentType.Raid,
-                    UniqueId = raidId,
-                    SeasonId = raidInfo.SeasonId,
                     RaidState = RaidStatus.Playing,
+                    SeasonId = RaidLobbyInfoDB.SeasonId,
+                    UniqueId = raidId,
+                    ServerId = 69,
+                    SecretCode = "0",
+                    Begin = DateTime.Now,
+                    End = DateTime.Now.AddHours(1),
+                    PlayerCount = 1,
                     IsPractice = isPractice,
-                    BossDifficulty = raidInfo.CurrentDifficulty,
+                    AccountLevelWhenCreateDB = ownerLevel,
+                    ParticipateCharacterServerIds = [],
+                    ClanAssistUsed = false,
                     RaidBossDBs = [
-                        new() {
+                        new RaidBossDB()
+                        {
                             ContentType = ContentType.Raid,
-                            BossCurrentHP = long.MaxValue
+                            BossCurrentHP = currentHp,
                         }
                     ],
                 };
@@ -71,15 +88,20 @@ namespace Phrenapates.Managers
 
             else
             {
-                RaidDB.BossDifficulty = raidInfo.CurrentDifficulty;
+                RaidDB.BossDifficulty = raidInfo.RaidDataInfo.CurrentDifficulty;
                 RaidDB.UniqueId = raidId;
                 RaidDB.IsPractice = isPractice;
             }
 
+            RaidLobbyInfoDB.PlayingRaidDB = RaidDB;
+
             return RaidDB;
         }
 
-        public RaidBattleDB CreateBattle(long ownerId, string ownerNickname, long raidId)
+        public RaidBattleDB CreateBattle(
+            long ownerId, string ownerNickname, long characterId,
+            long raidId, long bossHp
+        )
         {
             if (RaidBattleDB == null)
             {
@@ -87,13 +109,14 @@ namespace Phrenapates.Managers
                 {
                     ContentType = ContentType.Raid,
                     RaidUniqueId = raidId,
-                    CurrentBossHP = long.MaxValue,
+                    CurrentBossHP = bossHp,
                     RaidMembers = [
                         new() {
                             AccountId = ownerId,
                             AccountName = ownerNickname,
+                            CharacterId = characterId
                         }
-                    ]
+                    ],
                 };
             }
 
@@ -105,11 +128,36 @@ namespace Phrenapates.Managers
             return RaidBattleDB;
         }
 
-        public static long CalculateTimeScore(float duration, Difficulty difficulty)
+        public RaidLobbyInfoDB SaveBattle(long keyId, List<long> characterId, long currentBossHP, long groggyPoint, int bossIndex)
         {
-            int[] multipliers = [120, 240, 480, 960, 1440, 1920, 2400]; // from wiki
+            var RaidBossDB = new RaidBossDB()
+            {
+                ContentType = ContentType.Raid,
+                BossCurrentHP = currentBossHP,
+                BossGroggyPoint = groggyPoint,
+                BossIndex = bossIndex
+            };
+            RaidDB.RaidBossDBs.Clear();
+            RaidDB.RaidBossDBs.Add(RaidBossDB);
+            RaidLobbyInfoDB.PlayingRaidDB.RaidBossDBs = RaidDB.RaidBossDBs;
 
-            return (long)((3600f - duration) * multipliers[(int)difficulty]);
+            if (RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds.ContainsKey(keyId))
+            {
+                RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds[keyId].AddRange(characterId);
+                RaidLobbyInfoDB.ParticipateCharacterServerIds.AddRange(characterId);
+            }
+            else
+            {
+                RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds[keyId] = characterId;
+                RaidLobbyInfoDB.ParticipateCharacterServerIds = characterId;
+            }
+            return RaidLobbyInfoDB;
+        }
+
+        public void ClearPlayingBossDB()
+        {
+            RaidDB = null;
+            RaidLobbyInfoDB.PlayingRaidDB = RaidDB;
         }
     }
 }

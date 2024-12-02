@@ -28,12 +28,9 @@ namespace Phrenapates.Commands
                     if (long.TryParse(value, out seasonId))
                     {
                         var raidSeasonName = connection.ExcelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList.FirstOrDefault(x => x.SeasonId == seasonId);
-                        connection.Account.RaidInfo = new RaidInfo()
-                        {
-                            SeasonId = seasonId,
-                            BestRankingPoint = 0,
-                            TotalRankingPoint = 0,
-                        };
+                        connection.Account.RaidInfo.RaidDataInfo.SeasonId = seasonId;
+                        connection.Account.RaidInfo.RaidDataInfo.BestRankingPoint = 0;
+                        connection.Account.RaidInfo.RaidDataInfo.TotalRankingPoint = 0;
 
                         connection.SendChatMessage($"Raid Name: {string.Join(", ", raidSeasonName.OpenRaidBossGroup)}");
                         connection.SendChatMessage($"Raid ID: {raidSeasonName.SeasonId}");

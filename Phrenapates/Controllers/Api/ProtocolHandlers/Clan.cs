@@ -108,7 +108,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     // Assist Data
                     AccountId = 69,
                     AssistCharacterServerId = fakeAssistServerId,
-                    EchelonType = EchelonType.Raid,
+                    EchelonType = req.EchelonType,
                     AssistRelation = AssistRelation.Friend,
                     NickName = "Plana",
 
