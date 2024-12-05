@@ -1,8 +1,8 @@
-﻿using Plana.Database;
-using Plana.NetworkProtocol;
-using Phrenapates.Services;
+﻿using Phrenapates.Services;
+using Plana.Database;
 using Plana.FlatData;
-using Castle.Components.DictionaryAdapter.Xml;
+using Plana.MX.GameLogic.DBModel;
+using Plana.MX.NetworkProtocol;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {
@@ -66,21 +66,20 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.EventContent_BoxGachaShopList)]
         public ResponsePacket BoxGachaShopListHandler(EventContentBoxGachaShopListRequest req)
         {
-
-            return new EventContentBoxGachaShopListResponse()
-            {
-
-            };
+            return new EventContentBoxGachaShopListResponse();
         }
 
         [ProtocolHandler(Protocol.EventContent_ScenarioGroupHistoryUpdate)]
         public ResponsePacket ScenarioGroupHistoryUpdateHandler(EventContentScenarioGroupHistoryUpdateRequest req)
         {
-
-            return new EventContentScenarioGroupHistoryUpdateResponse()
-            {
-
-            };
+            return new EventContentScenarioGroupHistoryUpdateResponse();
         }
+
+        [ProtocolHandler(Protocol.EventContent_PermanentList)]
+        public ResponsePacket PermanentListHandler(EventContentPermanentListRequest req)
+        {
+            return new EventContentPermanentListResponse();
+        }
+
     }
 }

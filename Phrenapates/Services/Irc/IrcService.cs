@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using Plana.Database;
-using Serilog;
 
 namespace Phrenapates.Services.Irc
 {

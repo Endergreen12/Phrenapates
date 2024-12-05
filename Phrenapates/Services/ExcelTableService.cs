@@ -1,13 +1,8 @@
 ﻿using System.Data.SQLite;
-using System.IO;
-using System.Net.Http;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Google.FlatBuffers;
 using Ionic.Zip;
 using Plana.Crypto;
-using Plana.Database;
 using Phrenapates.Utils;
 using Serilog;
 
@@ -82,8 +77,7 @@ namespace Phrenapates.Services
 
             File.WriteAllText(versionTxtPath, Config.Instance.VersionId);
 
-            Log.Information($"Resource Version {Config.Instance.VersionId} downloaded!");
-        }
+            Log.Information($"Resource Version {Config.Instance.VersionId} downloaded!");        }
 
         /// <summary>
         /// Please <b>only</b> use this to get table that <b>have a respective file</b> (i.e. <c>CharacterExcelTable</c> have <c>characterexceltable.bytes</c>)

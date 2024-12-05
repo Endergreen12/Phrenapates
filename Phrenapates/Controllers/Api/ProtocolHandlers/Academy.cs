@@ -1,5 +1,6 @@
 ﻿using Plana.Database;
-using Plana.NetworkProtocol;
+using Plana.MX.GameLogic.DBModel;
+using Plana.MX.NetworkProtocol;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {

@@ -1,5 +1,5 @@
-using Plana.Database;
-using Plana.Parcel;
+using Plana.MX.GameLogic.DBModel;
+using Plana.MX.GameLogic.Parcel;
 using Plana.FlatData;
 
 public class ParcelService

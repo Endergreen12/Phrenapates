@@ -1,12 +1,8 @@
-﻿using Plana.Database;
+﻿using Plana.MX.GameLogic.DBModel;
 using Plana.Database.ModelExtensions;
 using Plana.FlatData;
-using Plana.Migrations;
-using Phrenapates.Services;
 using Phrenapates.Services.Irc;
-using System;
 using System.Data;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Plana.Utils
 {

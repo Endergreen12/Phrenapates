@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Phrenapates.Services;
 using Plana.Database;
 using Plana.FlatData;
-using Plana.Migrations.SqlServerMigrations;
-using Plana.NetworkProtocol;
-using Plana.Parcel;
-using Phrenapates.Services;
+using Plana.MX.GameLogic.DBModel;
+using Plana.MX.GameLogic.Parcel;
+using Plana.MX.Logic.Battles.Summary;
+using Plana.MX.NetworkProtocol;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {

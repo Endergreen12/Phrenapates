@@ -1,7 +1,4 @@
-using Plana.Database;
 using Plana.FlatData;
-using Plana.Utils;
-using Phrenapates.Services;
 using Phrenapates.Services.Irc;
 
 namespace Phrenapates.Commands

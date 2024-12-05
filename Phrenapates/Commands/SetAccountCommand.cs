@@ -1,4 +1,4 @@
-﻿using Plana.Database;
+﻿using Plana.MX.GameLogic.DBModel;
 using Phrenapates.Services.Irc;
 using System.ComponentModel;
 using System.Reflection;

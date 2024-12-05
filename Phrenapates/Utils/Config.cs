@@ -1,9 +1,8 @@
-﻿using Phrenapates.Controllers.Api.ProtocolHandlers;
-using Serilog;
-using System.Net;
+﻿using System;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text.Json;
+using Serilog;
 
 namespace Phrenapates.Utils
 {

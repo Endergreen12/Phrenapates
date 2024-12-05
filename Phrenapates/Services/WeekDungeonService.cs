@@ -1,5 +1,6 @@
-using Plana.Database;
 using Plana.FlatData;
+using Plana.MX.GameLogic.DBModel;
+using Plana.MX.Logic.Battles.Summary;
 
 public class WeekDungeonService
 {

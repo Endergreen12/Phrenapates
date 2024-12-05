@@ -1,4 +1,5 @@
-﻿using Plana.Database;
+﻿using Plana.MX.GameLogic.DBModel;
+using Plana.Database;
 using System.Net.Sockets;
 using System.Text.Json;
 

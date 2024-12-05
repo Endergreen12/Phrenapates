@@ -1,6 +1,5 @@
-using Plana.Database;
-using Plana.FlatData;
-using Phrenapates.Services;
+using Plana.MX.GameLogic.DBModel;
+using Plana.MX.Logic.Battles.Summary;
 using Plana.MX.Data;
 
 public class CampaignService

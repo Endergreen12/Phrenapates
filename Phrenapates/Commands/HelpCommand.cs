@@ -1,12 +1,6 @@
-﻿using Microsoft.Extensions.FileSystemGlobbing.Internal;
-using Plana.Database;
-using Phrenapates.Services.Irc;
-using Serilog;
+﻿using Phrenapates.Services.Irc;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Phrenapates.Commands
 {

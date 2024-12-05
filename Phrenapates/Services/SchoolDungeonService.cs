@@ -1,6 +1,6 @@
-using Plana.Database;
+using Plana.MX.GameLogic.DBModel;
 using Plana.FlatData;
-using Phrenapates.Services;
+using Plana.MX.Logic.Battles.Summary;
 
 public class SchoolDungeonService
 {

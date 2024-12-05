@@ -1,10 +1,5 @@
-﻿using Microsoft.AspNetCore.Http.Connections;
-using Plana.Database;
-using Plana.Database.ModelExtensions;
-using Plana.FlatData;
+﻿using Plana.Database.ModelExtensions;
 using Plana.Utils;
-using Phrenapates.Controllers.Api.ProtocolHandlers;
-using Phrenapates.Services;
 using Phrenapates.Services.Irc;
 
 namespace Phrenapates.Commands
