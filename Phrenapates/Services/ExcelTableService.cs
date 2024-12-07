@@ -40,7 +40,8 @@ namespace Phrenapates.Services
             var tableCatalogUrl = baseUrl + tableCatalogName;
             var tableCatalogPath = Path.Combine(resourceDir, tableCatalogName);
 
-            using var client = new HttpClient();
+            var client = new HttpClient();
+            client.Timeout = TimeSpan.FromMinutes(10);
             var downloadList = new List<string>() { "ExcelDB.db", "Excel.zip" };
 
             var downloadedFolderName = "downloaded";
