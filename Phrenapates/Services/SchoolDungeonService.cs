@@ -2,56 +2,59 @@ using Plana.MX.GameLogic.DBModel;
 using Plana.FlatData;
 using Plana.MX.Logic.Battles.Summary;
 
-public class SchoolDungeonService
+namespace Phrenapates.Services
 {
-    public static SchoolDungeonStageHistoryDB CreateSchoolDungeonStageHistoryDB(long accountId, SchoolDungeonStageExcelT excel)
+    public class SchoolDungeonService
     {
-        return new SchoolDungeonStageHistoryDB() { AccountServerId = accountId, StageUniqueId = excel.StageId };
-    }
-
-    public static void CalcStarGoals(SchoolDungeonStageExcelT excel, SchoolDungeonStageHistoryDB historyDB, BattleSummary battleSummary)
-    {
-        historyDB.StarFlags = new bool[excel.StarGoal.Count];
-
-        var starGoalTypes = excel.StarGoal;
-        var starGoalAmounts = excel.StarGoalAmount;
-
-        for (int i = 0; i < starGoalTypes.Count; i++)
+        public static SchoolDungeonStageHistoryDB CreateSchoolDungeonStageHistoryDB(long accountId, SchoolDungeonStageExcelT excel)
         {
-            var targetGoalType = starGoalTypes[i];
-            var targetGoalAmount = starGoalAmounts[i];
-
-            historyDB.StarFlags[i] = IsStarGoalCleared(targetGoalType, targetGoalAmount, battleSummary);
+            return new SchoolDungeonStageHistoryDB() { AccountServerId = accountId, StageUniqueId = excel.StageId };
         }
-    }
 
-    private static bool IsStarGoalCleared(StarGoalType goalType, int goalAmount, BattleSummary battleSummary)
-    {
-        var result = false;
-
-        switch (goalType)
+        public static void CalcStarGoals(SchoolDungeonStageExcelT excel, SchoolDungeonStageHistoryDB historyDB, BattleSummary battleSummary)
         {
-            case StarGoalType.Clear:
-                result = battleSummary.EndType == Plana.MX.Logic.Battles.BattleEndType.Clear;
-                break;
+            historyDB.StarFlags = new bool[excel.StarGoal.Count];
 
-            case StarGoalType.AllAlive:
-                foreach (var hero in battleSummary.Group01Summary.Heroes)
-                {
-                    if (hero.DeadFrame != -1)
+            var starGoalTypes = excel.StarGoal;
+            var starGoalAmounts = excel.StarGoalAmount;
+
+            for (int i = 0; i < starGoalTypes.Count; i++)
+            {
+                var targetGoalType = starGoalTypes[i];
+                var targetGoalAmount = starGoalAmounts[i];
+
+                historyDB.StarFlags[i] = IsStarGoalCleared(targetGoalType, targetGoalAmount, battleSummary);
+            }
+        }
+
+        private static bool IsStarGoalCleared(StarGoalType goalType, int goalAmount, BattleSummary battleSummary)
+        {
+            var result = false;
+
+            switch (goalType)
+            {
+                case StarGoalType.Clear:
+                    result = battleSummary.EndType == Plana.MX.Logic.Battles.BattleEndType.Clear;
+                    break;
+
+                case StarGoalType.AllAlive:
+                    foreach (var hero in battleSummary.Group01Summary.Heroes)
                     {
-                        return false;
+                        if (hero.DeadFrame != -1)
+                        {
+                            return false;
+                        }
                     }
-                }
 
-                result = true;
-                break;
+                    result = true;
+                    break;
 
-            case StarGoalType.ClearTimeInSec:
-                result = battleSummary.EndFrame <= goalAmount * 30;
-                break;
+                case StarGoalType.ClearTimeInSec:
+                    result = battleSummary.EndFrame <= goalAmount * 30;
+                    break;
+            }
+
+            return result;
         }
-
-        return result;
     }
 }

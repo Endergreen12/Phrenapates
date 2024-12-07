@@ -2,17 +2,20 @@ using Plana.MX.GameLogic.DBModel;
 using Plana.MX.GameLogic.Parcel;
 using Plana.FlatData;
 
-public class ParcelService
+namespace Phrenapates.Services
 {
-    public static void AddOrConsumeWithParcel(AccountDB account, List<ParcelInfo> parcelInfos, bool doConsume = false)
+    public class ParcelService
     {
-        foreach(var parcelInfo in parcelInfos)
+        public static void AddOrConsumeWithParcel(AccountDB account, List<ParcelInfo> parcelInfos, bool doConsume = false)
         {
-            switch(parcelInfo.Key.Type)
+            foreach(var parcelInfo in parcelInfos)
             {
-                case ParcelType.Currency:
-                    account.Currencies.First().CurrencyDict[(CurrencyTypes)parcelInfo.Key.Id] += parcelInfo.Amount * (doConsume ? -1 : 1);
-                    break;
+                switch(parcelInfo.Key.Type)
+                {
+                    case ParcelType.Currency:
+                        account.Currencies.First().CurrencyDict[(CurrencyTypes)parcelInfo.Key.Id] += parcelInfo.Amount * (doConsume ? -1 : 1);
+                        break;
+                }
             }
         }
     }

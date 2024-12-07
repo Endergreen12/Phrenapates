@@ -2,6 +2,7 @@
 using Plana.Database;
 using Plana.MX.GameLogic.DBModel;
 using Plana.MX.NetworkProtocol;
+using Plana.MX.Logic.Battles;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {
@@ -22,6 +23,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket SyncHandler(MultiFloorRaidSyncRequest req)
         {
             var raidList = sessionKeyService.GetAccount(req.SessionKey).MultiFloorRaids.ToList();
+            
             return new MultiFloorRaidSyncResponse()
             {
                 MultiFloorRaidDBs = raidList.Count == 0 ? new List<MultiFloorRaidDB>() { new() { SeasonId = (long)req.SeasonId } } : raidList,
@@ -43,7 +45,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
             MultiFloorRaidDB db = new() { SeasonId = req.SeasonId };
 
-            if (!req.Summary.IsAbort && req.Summary.EndType == Plana.MX.Logic.Battles.BattleEndType.Clear)
+            if (!req.Summary.IsAbort && req.Summary.EndType == BattleEndType.Clear)
             {
                 if (account.MultiFloorRaids.Any(x => x.AccountServerId == req.AccountId))
                 {

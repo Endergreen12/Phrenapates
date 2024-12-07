@@ -31,12 +31,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
             var raidSeasonExcel = excelTableService.GetTable<EliminateRaidSeasonManageExcelTable>().UnPack().DataList;
-            var targetSeason = raidSeasonExcel.FirstOrDefault(x => x.SeasonId == account.RaidInfo.EliminateRaidDataInfo.SeasonId);
+            var targetSeason = raidSeasonExcel.FirstOrDefault(x => x.SeasonId == account.ContentInfo.EliminateRaidDataInfo.SeasonId);
 
             return new EliminateRaidLobbyResponse()
             {
                 SeasonType = RaidSeasonType.Open,
-                RaidLobbyInfoDB = EliminateRaidManager.Instance.GetLobby(account.RaidInfo, targetSeason),
+                RaidLobbyInfoDB = EliminateRaidManager.Instance.GetLobby(account.ContentInfo, targetSeason),
             };
         }
 
@@ -48,13 +48,13 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var raidSeasonExcel = excelTableService.GetTable<EliminateRaidStageExcelTable>().UnPack().DataList;
             var targetSeason = raidSeasonExcel.FirstOrDefault(x => x.Id == req.RaidUniqueId);
 
-            account.RaidInfo.EliminateRaidDataInfo.CurrentRaidUniqueId = req.RaidUniqueId;
-            account.RaidInfo.EliminateRaidDataInfo.CurrentDifficulty = targetSeason.Difficulty;
+            account.ContentInfo.EliminateRaidDataInfo.CurrentRaidUniqueId = req.RaidUniqueId;
+            account.ContentInfo.EliminateRaidDataInfo.CurrentDifficulty = targetSeason.Difficulty;
 
-            context.Entry(account).Property(x => x.RaidInfo).IsModified = true; // force update
+            context.Entry(account).Property(x => x.ContentInfo).IsModified = true; // force update
             context.SaveChanges();
 
-            var raid = EliminateRaidManager.Instance.CreateRaid(account.RaidInfo, account.ServerId, account.Nickname, req.IsPractice, req.RaidUniqueId);
+            var raid = EliminateRaidManager.Instance.CreateRaid(account.ContentInfo, account.ServerId, account.Nickname, req.IsPractice, req.RaidUniqueId);
             var battle = EliminateRaidManager.Instance.CreateBattle(account.ServerId, account.Nickname, req.RaidUniqueId);
             AssistCharacterDB assistCharacter = new AssistCharacterDB();
             if (req.AssistUseInfo != null)
@@ -113,18 +113,18 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
             var raidStageTable = excelTableService.GetTable<EliminateRaidStageExcelTable>().UnPack().DataList;
-            var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.RaidInfo.EliminateRaidDataInfo.CurrentRaidUniqueId);
+            var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.ContentInfo.EliminateRaidDataInfo.CurrentRaidUniqueId);
             
             var totalTime = req.Summary.EndFrame/30f;
-            var timeScore = RaidUtils.CalculateTimeScore(totalTime, account.RaidInfo.EliminateRaidDataInfo.CurrentDifficulty);
+            var timeScore = RaidService.CalculateTimeScore(totalTime, account.ContentInfo.EliminateRaidDataInfo.CurrentDifficulty);
             var hpPercentScorePoint = currentRaidData.HPPercentScore;
             var defaultClearPoint = currentRaidData.DefaultClearScore;
 
             var rankingPoint = timeScore + hpPercentScorePoint + defaultClearPoint;
 
-            account.RaidInfo.EliminateRaidDataInfo.BestRankingPoint = rankingPoint > account.RaidInfo.EliminateRaidDataInfo.BestRankingPoint ? rankingPoint : account.RaidInfo.EliminateRaidDataInfo.BestRankingPoint;
-            account.RaidInfo.EliminateRaidDataInfo.TotalRankingPoint += rankingPoint;
-            context.Entry(account).Property(x => x.RaidInfo).IsModified = true;
+            account.ContentInfo.EliminateRaidDataInfo.BestRankingPoint = rankingPoint > account.ContentInfo.EliminateRaidDataInfo.BestRankingPoint ? rankingPoint : account.ContentInfo.EliminateRaidDataInfo.BestRankingPoint;
+            account.ContentInfo.EliminateRaidDataInfo.TotalRankingPoint += rankingPoint;
+            context.Entry(account).Property(x => x.ContentInfo).IsModified = true;
             context.SaveChanges();
 
             var battle = EliminateRaidManager.Instance.RaidBattleDB;
@@ -138,7 +138,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             return new EliminateRaidEndBattleResponse()
             {
                 RankingPoint = rankingPoint,
-                BestRankingPoint = account.RaidInfo.EliminateRaidDataInfo.BestRankingPoint,
+                BestRankingPoint = account.ContentInfo.EliminateRaidDataInfo.BestRankingPoint,
                 ClearTimePoint = timeScore,
                 HPPercentScorePoint = hpPercentScorePoint,
                 DefaultClearPoint = defaultClearPoint

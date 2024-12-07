@@ -13,7 +13,7 @@ namespace Phrenapates.Managers
 
         public RaidBattleDB RaidBattleDB { get; private set; }
 
-        public EliminateRaidLobbyInfoDB GetLobby(RaidInfo raidInfo, EliminateRaidSeasonManageExcelT targetSeasonData)
+        public EliminateRaidLobbyInfoDB GetLobby(ContentInfo raidInfo, EliminateRaidSeasonManageExcelT targetSeasonData)
         {
             if (EliminateRaidLobbyInfoDB == null || EliminateRaidLobbyInfoDB.SeasonId != raidInfo.EliminateRaidDataInfo.SeasonId)
             {
@@ -49,7 +49,7 @@ namespace Phrenapates.Managers
             return EliminateRaidLobbyInfoDB;
         }
 
-        public RaidDB CreateRaid(RaidInfo raidInfo, long ownerId, string ownerNickname, bool isPractice, long raidId)
+        public RaidDB CreateRaid(ContentInfo raidInfo, long ownerId, string ownerNickname, bool isPractice, long raidId)
         {
             if (RaidDB == null)
             {

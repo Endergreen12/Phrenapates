@@ -26,12 +26,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
             var raidSeasonExcel = excelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList;
-            var targetSeason = raidSeasonExcel.FirstOrDefault(x => x.SeasonId == account.RaidInfo.RaidDataInfo.SeasonId);
+            var targetSeason = raidSeasonExcel.FirstOrDefault(x => x.SeasonId == account.ContentInfo.RaidDataInfo.SeasonId);
 
             return new RaidLobbyResponse()
             {
                 SeasonType = RaidSeasonType.Open,
-                RaidLobbyInfoDB = RaidManager.Instance.GetLobby(account.RaidInfo, targetSeason),
+                RaidLobbyInfoDB = RaidManager.Instance.GetLobby(account.ContentInfo, targetSeason),
             };
         }
 
@@ -44,16 +44,16 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == req.RaidUniqueId);
             var bossData = raidExcelTable.FirstOrDefault(x => x.CharacterId == currentRaidData.BossCharacterId.FirstOrDefault());
 
-            account.RaidInfo.RaidDataInfo.CurrentRaidUniqueId = req.RaidUniqueId;
-            account.RaidInfo.RaidDataInfo.CurrentDifficulty = req.Difficulty;
+            account.ContentInfo.RaidDataInfo.CurrentRaidUniqueId = req.RaidUniqueId;
+            account.ContentInfo.RaidDataInfo.CurrentDifficulty = req.Difficulty;
 
-            context.Entry(account).Property(x => x.RaidInfo).IsModified = true; // force update
+            context.Entry(account).Property(x => x.ContentInfo).IsModified = true; // force update
             context.SaveChanges();
             
             var raidLobbyInfoDB = RaidManager.Instance.RaidLobbyInfoDB;
 
             var bossHp = (raidLobbyInfoDB?.PlayingRaidDB?.RaidBossDBs != null && raidLobbyInfoDB.PlayingRaidDB.RaidBossDBs.Count > 0) ? raidLobbyInfoDB.PlayingRaidDB.RaidBossDBs.First().BossCurrentHP : bossData.MaxHP100;
-            var raid = RaidManager.Instance.CreateRaid(account.RaidInfo, account.ServerId, account.Nickname, account.Level, account.RepresentCharacterServerId, req.IsPractice, req.RaidUniqueId, bossHp);
+            var raid = RaidManager.Instance.CreateRaid(account.ContentInfo, account.ServerId, account.Nickname, account.Level, account.RepresentCharacterServerId, req.IsPractice, req.RaidUniqueId, bossHp);
             var battle = RaidManager.Instance.CreateBattle(account.ServerId, account.Nickname, account.RepresentCharacterServerId, req.RaidUniqueId, bossHp);
             AssistCharacterDB assistCharacter = new();
             if (req.AssistUseInfo != null)
@@ -114,7 +114,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             var raidStageTable = excelTableService.GetTable<RaidStageExcelTable>().UnPack().DataList;
             var raidExcelTable = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
-            var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.RaidInfo.RaidDataInfo.CurrentRaidUniqueId);
+            var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.ContentInfo.RaidDataInfo.CurrentRaidUniqueId);
             var bossData = raidExcelTable.FirstOrDefault(x => x.CharacterId == currentRaidData.BossCharacterId.FirstOrDefault());
 
             var raidLobbyInfoDB = RaidManager.Instance.RaidLobbyInfoDB;
@@ -127,21 +127,21 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 List<long> characterId = req.Summary.Group01Summary.Heroes.Select(x => x.ServerId).ToList()
                     .Concat(req.Summary.Group01Summary.Supporters.Select(x => x.ServerId)).ToList();
                 RaidManager.Instance.SaveBattle(account.ServerId, characterId, totalHpLeft, bossResult.RaidDamage.GivenGroggyPoint, bossResult.RaidDamage.Index);
-                account.RaidInfo.RaidDataInfo.TimeBonus += req.Summary.EndFrame;
+                account.ContentInfo.RaidDataInfo.TimeBonus += req.Summary.EndFrame;
                 return new RaidEndBattleResponse();
             }
 
             var totalTime = req.Summary.EndFrame/30f;
-            var timeScore = RaidUtils.CalculateTimeScore(totalTime, account.RaidInfo.RaidDataInfo.CurrentDifficulty);
+            var timeScore = RaidService.CalculateTimeScore(totalTime, account.ContentInfo.RaidDataInfo.CurrentDifficulty);
             var hpPercentScorePoint = currentRaidData.HPPercentScore;
             var defaultClearPoint = currentRaidData.DefaultClearScore;
 
             var rankingPoint = timeScore + hpPercentScorePoint + defaultClearPoint;
 
-            account.RaidInfo.RaidDataInfo.BestRankingPoint = rankingPoint > account.RaidInfo.RaidDataInfo.BestRankingPoint ? rankingPoint : account.RaidInfo.RaidDataInfo.BestRankingPoint;
-            account.RaidInfo.RaidDataInfo.TotalRankingPoint += rankingPoint;
-            account.RaidInfo.RaidDataInfo.TimeBonus = 0;
-            context.Entry(account).Property(x => x.RaidInfo).IsModified = true; // force update
+            account.ContentInfo.RaidDataInfo.BestRankingPoint = rankingPoint > account.ContentInfo.RaidDataInfo.BestRankingPoint ? rankingPoint : account.ContentInfo.RaidDataInfo.BestRankingPoint;
+            account.ContentInfo.RaidDataInfo.TotalRankingPoint += rankingPoint;
+            account.ContentInfo.RaidDataInfo.TimeBonus = 0;
+            context.Entry(account).Property(x => x.ContentInfo).IsModified = true; // force update
             context.SaveChanges();
 
             var battle = RaidManager.Instance.RaidBattleDB;
@@ -156,7 +156,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             return new RaidEndBattleResponse()
             {
                 RankingPoint = rankingPoint,
-                BestRankingPoint = account.RaidInfo.RaidDataInfo.BestRankingPoint,
+                BestRankingPoint = account.ContentInfo.RaidDataInfo.BestRankingPoint,
                 ClearTimePoint = timeScore,
                 HPPercentScorePoint = hpPercentScorePoint,
                 DefaultClearPoint = defaultClearPoint

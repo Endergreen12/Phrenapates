@@ -23,6 +23,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 c.AccountServerId == accountServerId && c.ServerId == equipmentServerId
             );
         }
+        
 
         private ArenaCharacterDB? Convert(long accountServerId, long characterServerId)
         {
@@ -94,28 +95,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             };
         }
 
-        private static readonly ArenaTeamSettingDB dummyTeam =
-            new()
-            {
-                EchelonType = EchelonType.ArenaDefence,
-                LeaderCharacterId = 10065,
-                MainCharacters =
-                [
-                    new ArenaCharacterDB()
-                    {
-                        UniqueId = 10065,
-                        StarGrade = 3,
-                        Level = 90,
-                        PublicSkillLevel = 1,
-                        ExSkillLevel = 1,
-                        PassiveSkillLevel = 1,
-                        ExtraPassiveSkillLevel = 1,
-                        LeaderSkillLevel = 1
-                    }
-                ],
-                MapId = 1001,
-            };
-
         private ArenaTeamSettingDB? GetDefense(long accountId)
         {
             var defense = context.Echelons.OrderBy(e => e.ServerId).LastOrDefault(e =>
@@ -127,37 +106,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             if (defense == null)
                 return null;
             return Convert(defense);
-        }
-
-        private static List<ArenaUserDB> DummyOpponent(ArenaTeamSettingDB? team)
-        {
-            return
-            [
-                new ArenaUserDB()
-                {
-                    RepresentCharacterUniqueId = 20024,
-                    NickName = "your",
-                    Rank = 2,
-                    Level = 90,
-                    TeamSettingDB = team ?? dummyTeam
-                },
-                new ArenaUserDB()
-                {
-                    RepresentCharacterUniqueId = 10059,
-                    NickName = "defense",
-                    Rank = 3,
-                    Level = 90,
-                    TeamSettingDB = team ?? dummyTeam
-                },
-                new ArenaUserDB()
-                {
-                    RepresentCharacterUniqueId = 10065,
-                    NickName = "team",
-                    Rank = 4,
-                    Level = 90,
-                    TeamSettingDB = team ?? dummyTeam
-                }
-            ];
         }
 
         [ProtocolHandler(Protocol.Arena_EnterLobby)]
@@ -173,7 +121,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     SeasonRecord = 1,
                     AllTimeRecord = 1
                 },
-                OpponentUserDBs = DummyOpponent(GetDefense(req.AccountId)),
+                OpponentUserDBs = ArenaService.DummyOpponent(GetDefense(req.AccountId)),
                 MapId = 1001
             };
         }
@@ -184,7 +132,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             return new ArenaOpponentListResponse()
             {
                 PlayerRank = 1,
-                OpponentUserDBs = DummyOpponent(GetDefense(req.AccountId))
+                OpponentUserDBs = ArenaService.DummyOpponent(GetDefense(req.AccountId))
             };
         }
 
@@ -222,7 +170,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     BattleStartTime = DateTime.Now,
                     Seed = 1,
                     AttackingUserDB = arenaUserDB,
-                    DefendingUserDB = DummyOpponent(GetDefense(req.AccountId))[0]
+                    DefendingUserDB = ArenaService.DummyOpponent(GetDefense(req.AccountId))[0]
                 }
             };
         }
@@ -230,6 +178,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.Arena_EnterBattlePart2)]
         public ResponsePacket EnterBattlePart2Handler(ArenaEnterBattlePart2Request req)
         {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+
             return new ArenaEnterBattlePart2Response()
             {
                 ArenaBattleDB = req.ArenaBattleDB,
@@ -241,87 +191,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     SeasonRecord = 1,
                     AllTimeRecord = 1
                 },
-                AccountCurrencyDB = new AccountCurrencyDB
-                {
-                    AccountLevel = 90,
-                    AcademyLocationRankSum = 1,
-                    CurrencyDict = new Dictionary<CurrencyTypes, long>
-                    {
-                        { CurrencyTypes.Gem, long.MaxValue }, // gacha currency 600
-                        { CurrencyTypes.GemPaid, 0 },
-                        { CurrencyTypes.GemBonus, long.MaxValue }, // default blue gem?
-                        { CurrencyTypes.Gold, 962_350_000 }, // credit 10,000
-                        { CurrencyTypes.ActionPoint, long.MaxValue }, // energy  24
-                        { CurrencyTypes.AcademyTicket, 3 },
-                        { CurrencyTypes.ArenaTicket, 5 },
-                        { CurrencyTypes.RaidTicket, 3 },
-                        { CurrencyTypes.WeekDungeonChaserATicket, 0 },
-                        { CurrencyTypes.WeekDungeonChaserBTicket, 0 },
-                        { CurrencyTypes.WeekDungeonChaserCTicket, 0 },
-                        { CurrencyTypes.SchoolDungeonATicket, 0 },
-                        { CurrencyTypes.SchoolDungeonBTicket, 0 },
-                        { CurrencyTypes.SchoolDungeonCTicket, 0 },
-                        { CurrencyTypes.TimeAttackDungeonTicket, 3 },
-                        { CurrencyTypes.MasterCoin, 0 },
-                        { CurrencyTypes.WorldRaidTicketA, 40 },
-                        { CurrencyTypes.WorldRaidTicketB, 40 },
-                        { CurrencyTypes.WorldRaidTicketC, 40 },
-                        { CurrencyTypes.ChaserTotalTicket, 6 },
-                        { CurrencyTypes.SchoolDungeonTotalTicket, 6 },
-                        { CurrencyTypes.EliminateTicketA, 1 },
-                        { CurrencyTypes.EliminateTicketB, 1 },
-                        { CurrencyTypes.EliminateTicketC, 1 },
-                        { CurrencyTypes.EliminateTicketD, 1 }
-                    },
-                    UpdateTimeDict = new Dictionary<CurrencyTypes, DateTime>
-                    {
-                        { CurrencyTypes.ActionPoint, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.AcademyTicket, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.ArenaTicket, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.RaidTicket, DateTime.Parse("2024-04-26T19:29:12") },
-                        {
-                            CurrencyTypes.WeekDungeonChaserATicket,
-                            DateTime.Parse("2024-04-26T19:29:12")
-                        },
-                        {
-                            CurrencyTypes.WeekDungeonChaserBTicket,
-                            DateTime.Parse("2024-04-26T19:29:12")
-                        },
-                        {
-                            CurrencyTypes.WeekDungeonChaserCTicket,
-                            DateTime.Parse("2024-04-26T19:29:12")
-                        },
-                        {
-                            CurrencyTypes.SchoolDungeonATicket,
-                            DateTime.Parse("2024-04-26T19:29:12")
-                        },
-                        {
-                            CurrencyTypes.SchoolDungeonBTicket,
-                            DateTime.Parse("2024-04-26T19:29:12")
-                        },
-                        {
-                            CurrencyTypes.SchoolDungeonCTicket,
-                            DateTime.Parse("2024-04-26T19:29:12")
-                        },
-                        {
-                            CurrencyTypes.TimeAttackDungeonTicket,
-                            DateTime.Parse("2024-04-26T19:29:12")
-                        },
-                        { CurrencyTypes.MasterCoin, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.WorldRaidTicketA, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.WorldRaidTicketB, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.WorldRaidTicketC, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.ChaserTotalTicket, DateTime.Parse("2024-04-26T19:29:12") },
-                        {
-                            CurrencyTypes.SchoolDungeonTotalTicket,
-                            DateTime.Parse("2024-04-26T19:29:12")
-                        },
-                        { CurrencyTypes.EliminateTicketA, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.EliminateTicketB, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.EliminateTicketC, DateTime.Parse("2024-04-26T19:29:12") },
-                        { CurrencyTypes.EliminateTicketD, DateTime.Parse("2024-04-26T19:29:12") }
-                    }
-                }
+                AccountCurrencyDB = account.Currencies.FirstOrDefault()
             };
         }
     }

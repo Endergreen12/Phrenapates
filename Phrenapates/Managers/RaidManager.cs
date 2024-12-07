@@ -9,11 +9,11 @@ namespace Phrenapates.Managers
     {
         public SingleRaidLobbyInfoDB RaidLobbyInfoDB { get; private set; }
 
-        public RaidDB? RaidDB {  get; private set; }
+        public RaidDB RaidDB { get; private set; }
 
         public RaidBattleDB RaidBattleDB { get; private set; }
 
-        public SingleRaidLobbyInfoDB GetLobby(RaidInfo raidInfo, RaidSeasonManageExcelT targetSeasonData)
+        public SingleRaidLobbyInfoDB GetLobby(ContentInfo raidInfo, RaidSeasonManageExcelT targetSeasonData)
         {
             if (RaidLobbyInfoDB == null || RaidLobbyInfoDB.SeasonId != raidInfo.RaidDataInfo.SeasonId)
             {
@@ -36,7 +36,7 @@ namespace Phrenapates.Managers
                     NextSeasonId = 999,
                     NextSeasonStartDate = DateTime.Parse("2099-01-01T11:00:00"),
                     NextSeasonEndDate = DateTime.Parse("2099-01-08T03:59:59"),
-                    NextSettlementEndDate = DateTime.Parse("2099-01-08T23:59:59"), 
+                    NextSettlementEndDate = DateTime.Parse("2099-01-08T23:59:59"),
                 };
             } 
             
@@ -50,7 +50,7 @@ namespace Phrenapates.Managers
         }
 
         public RaidDB CreateRaid(
-            RaidInfo raidInfo,
+            ContentInfo raidInfo,
             long ownerId, string ownerNickname, int ownerLevel, long characterId,
             bool isPractice, long raidId, long currentHp)
         {
@@ -68,7 +68,7 @@ namespace Phrenapates.Managers
                     RaidState = RaidStatus.Playing,
                     SeasonId = RaidLobbyInfoDB.SeasonId,
                     UniqueId = raidId,
-                    ServerId = 69,
+                    ServerId = 1,
                     SecretCode = "0",
                     Begin = DateTime.Now,
                     End = DateTime.Now.AddHours(1),

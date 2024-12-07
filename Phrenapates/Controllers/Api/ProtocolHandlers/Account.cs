@@ -372,6 +372,29 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             account.Mails.Add(Mail.CreateMail(req.AccountId));
             context.SaveChanges();
 
+            var RaidSeason = excelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList.LastOrDefault();
+            var TimeAttackDungeonSeason = excelTableService.GetTable<TimeAttackDungeonSeasonManageExcelTable>().UnPack().DataList.LastOrDefault();
+            var EliminateRaidSeason = excelTableService.GetTable<EliminateRaidSeasonManageExcelTable>().UnPack().DataList.LastOrDefault();
+
+            // Raid Assigment
+            account.ContentInfo.RaidDataInfo = new()
+            {
+                SeasonId = RaidSeason.SeasonId,
+                BestRankingPoint = 0,
+                TotalRankingPoint = 0
+            };
+            account.ContentInfo.TimeAttackDungeonDataInfo = new()
+            {
+                SeasonId = TimeAttackDungeonSeason.Id,
+            };
+            account.ContentInfo.EliminateRaidDataInfo = new()
+            {
+                SeasonId = EliminateRaidSeason.SeasonId,
+                BestRankingPoint = 0,
+                TotalRankingPoint = 0
+            };
+            context.SaveChanges();
+
             return new AccountCreateResponse()
             {
                 SessionKey = sessionKeyService.Create(account.PublisherAccountId)
@@ -414,10 +437,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     CafeDBs = [.. account.Cafes],
                     FurnitureDBs = [.. account.Furnitures]
                 },
+
                 AccountCurrencySyncResponse = new AccountCurrencySyncResponse()
                 {
                     AccountCurrencyDB = account.Currencies.FirstOrDefault()
                 },
+
                 CharacterListResponse = new CharacterListResponse()
                 {
                     CharacterDBs = [.. account.Characters],
@@ -425,7 +450,21 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     WeaponDBs = [.. account.Weapons],
                     CostumeDBs = [],
                 },
-                ItemListResponse = new ItemListResponse() { ItemDBs = [.. account.Items], },
+
+                ItemListResponse = new ItemListResponse()
+                { 
+                    ItemDBs = [.. account.Items], 
+                },
+
+                EquipmentItemListResponse = new EquipmentItemListResponse()
+                {
+                    EquipmentDBs = [.. account.Equipment]
+                },
+
+                CharacterGearListResponse = new CharacterGearListResponse()
+                {
+                    GearDBs = [.. account.Gears]
+                },
 
                 EchelonListResponse = new EchelonListResponse()
                 {
@@ -436,6 +475,50 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 {
                     MemoryLobbyDBs = [.. account.MemoryLobbies]
                 },
+
+                CampaignListResponse = new CampaignListResponse()
+                {
+                    CampaignChapterClearRewardHistoryDBs = [],
+                    StageHistoryDBs = [.. account.CampaignStageHistories],
+                    StrategyObjecthistoryDBs = []
+                },
+
+                ArenaLoginResponse = new ArenaLoginResponse()
+                {
+                    ArenaPlayerInfoDB = new()
+                    {
+                        CurrentSeasonId = account.ContentInfo.ArenaDataInfo.SeasonId,
+                    }
+                },
+
+                RaidLoginResponse = new RaidLoginResponse()
+                {
+                    SeasonType = RaidSeasonType.Open,
+                },
+
+                EliminateRaidLoginResponse = new EliminateRaidLoginResponse()
+                {
+                    SeasonType = RaidSeasonType.Open,
+                },
+
+                //CraftInfoListResponse = new CraftInfoListResponse(),
+
+                ClanLoginResponse = new ClanLoginResponse()
+                {
+                    AccountClanMemberDB = new() { AccountId = account.ServerId }
+                },
+
+                //MomotalkOutlineResponse = new MomoTalkOutLineResponse(),
+
+                ScenarioListResponse = new ScenarioListResponse()
+                {
+                    ScenarioHistoryDBs = [.. account.Scenarios],
+                    ScenarioGroupHistoryDBs = [.. account.ScenarioGroups]
+                },
+
+                /*ShopGachaRecruitListResponse = new ShopGachaRecruitListResponse(),
+                TimeAttackDungeonLoginResponse = new TimeAttackDungeonLoginResponse(),
+                BillingPurchaseListByYostarResponse = new BillingPurchaseListByYostarResponse(),*/
 
                 EventContentPermanentListResponse = new EventContentPermanentListResponse()
                 {
@@ -457,38 +540,16 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     ],
                 },
 
-                EquipmentItemListResponse = new EquipmentItemListResponse()
-                {
-                    EquipmentDBs = [.. account.Equipment]
-                },
-
-                CharacterGearListResponse = new CharacterGearListResponse()
-                {
-                    GearDBs = [.. account.Gears]
-                },
-
-                ClanLoginResponse = new ClanLoginResponse()
-                {
-                    AccountClanMemberDB = new() { AccountId = account.ServerId }
-                },
-
-                ScenarioListResponse = new ScenarioListResponse()
-                {
-                    ScenarioHistoryDBs = [.. account.Scenarios],
-                    ScenarioGroupHistoryDBs = [.. account.ScenarioGroups]
-                },
-
-                EliminateRaidLoginResponse = new EliminateRaidLoginResponse()
-                {
-                    SeasonType = RaidSeasonType.Open,
-                    SweepPointByRaidUniqueId = new()
-                    {
-                        { 2041104, int.MaxValue },
-                        { 2041204, int.MaxValue }
-                    }
-                },
-                
+                /*AttachmentGetResponse = new AttachmentGetResponse(),
+                AttachmentEmblemListResponse = new AttachmentEmblemListResponse(),
+                ContentSweepMultiSweepPresetListResponse = new ContentSweepMultiSweepPresetListResponse(),
+                StickerListResponse = new StickerLoginResponse(),
+                MultiFloorRaidSyncResponse = new MultiFloorRaidSyncResponse(),
+                FriendCount = 0,*/
                 FriendCode = "SUS",
+                /*StaticOpenConditions = Enum.GetValues(typeof(OpenConditionContent))
+                    .Cast<OpenConditionContent>()
+                    .ToDictionary(key => key, key => OpenConditionLockReason.None)*/
             };
         }
 
