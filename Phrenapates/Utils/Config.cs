@@ -9,12 +9,12 @@ namespace Phrenapates.Utils
     public class Config : Singleton<Config>
     {
         public static string ConfigPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config.json");
-        
+
         public string IRCAddress { get; set; } = "127.0.0.1";
         public int IRCPort { get; set; } = 6667;
-
         public string VersionId { get; set; } = "r74_c43tmk8o85er8xdapffq";
 
+        private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
         public static void Load()
         {
             if (!File.Exists(ConfigPath))
@@ -31,8 +31,7 @@ namespace Phrenapates.Utils
 
         public static void Save()
         {
-            File.WriteAllText(ConfigPath, JsonSerializer.Serialize(Instance));
-
+            File.WriteAllText(ConfigPath, JsonSerializer.Serialize(Instance, JsonOptions));
             Log.Debug($"Config saved");
         }
 
@@ -54,5 +53,6 @@ namespace Phrenapates.Utils
             }
             return output;
         }
+
     }
 }
