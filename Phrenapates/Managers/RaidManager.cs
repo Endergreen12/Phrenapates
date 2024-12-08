@@ -1,4 +1,6 @@
-﻿using Plana.MX.GameLogic.DBModel;
+﻿using System;
+using System.Text.Json;
+using Plana.MX.GameLogic.DBModel;
 using Plana.FlatData;
 using Plana.Database;
 using Phrenapates.Utils;
@@ -32,11 +34,12 @@ namespace Phrenapates.Managers
                     ClanAssistUseInfo = new(),
                     SeasonStartDate = DateTime.Now.AddHours(-1),
                     SeasonEndDate = DateTime.Now.AddDays(7),
-                    SettlementEndDate = DateTime.Now.AddMonths(1),
-                    NextSeasonId = 999,
-                    NextSeasonStartDate = DateTime.Parse("2099-01-01T11:00:00"),
-                    NextSeasonEndDate = DateTime.Parse("2099-01-08T03:59:59"),
-                    NextSettlementEndDate = DateTime.Parse("2099-01-08T23:59:59"),
+                    SettlementEndDate = DateTime.Now.AddDays(8),
+                    NextSeasonId = 300,
+                    NextSeasonStartDate = DateTime.Now.AddMonths(1),
+                    NextSeasonEndDate = DateTime.Now.AddMonths(1).AddDays(7),
+                    NextSettlementEndDate = DateTime.Now.AddMonths(1).AddDays(8),
+                    RemainFailCompensation = new() { { 0, true } }
                 };
             } 
             
@@ -75,8 +78,6 @@ namespace Phrenapates.Managers
                     PlayerCount = 1,
                     IsPractice = isPractice,
                     AccountLevelWhenCreateDB = ownerLevel,
-                    ParticipateCharacterServerIds = [],
-                    ClanAssistUsed = false,
                     RaidBossDBs = [
                         new RaidBossDB()
                         {
@@ -84,7 +85,6 @@ namespace Phrenapates.Managers
                             BossCurrentHP = currentHp,
                         }
                     ],
-                    
                 };
             }
 
@@ -142,7 +142,8 @@ namespace Phrenapates.Managers
             RaidDB.RaidBossDBs.Clear();
             RaidDB.RaidBossDBs.Add(RaidBossDB);
             RaidLobbyInfoDB.PlayingRaidDB.RaidBossDBs = RaidDB.RaidBossDBs;
-
+            if (RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds == null) RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds = new();
+            
             if (RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds.ContainsKey(keyId))
             {
                 RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds[keyId].AddRange(characterId);
@@ -153,6 +154,7 @@ namespace Phrenapates.Managers
                 RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds[keyId] = characterId;
                 RaidLobbyInfoDB.ParticipateCharacterServerIds = characterId;
             }
+            Console.WriteLine(JsonSerializer.Serialize(RaidLobbyInfoDB));
             return RaidLobbyInfoDB;
         }
 

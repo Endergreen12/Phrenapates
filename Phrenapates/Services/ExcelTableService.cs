@@ -19,6 +19,17 @@ namespace Phrenapates.Services
         {
             var versionTxtPath = Path.Combine(resourceDir, "version.txt");
 
+#if DEBUG
+                var dumpDir = Path.Join(Path.GetDirectoryName(AppContext.BaseDirectory), "dumped");
+                var excelDir = Path.Combine(resourceDir, "Excel");
+                var excelDbDir = Path.Join(resourceDir, "ExcelDB.db");
+                if(!Directory.Exists(dumpDir) && Directory.Exists(excelDir) && File.Exists(excelDbDir))
+                {
+                    Directory.CreateDirectory(dumpDir);
+                    TableService.DumpExcels(excelDir, excelDbDir, dumpDir);   
+                }
+#endif
+
             if (Directory.Exists(resourceDir))
             {
                 if(File.Exists(versionTxtPath) && File.ReadAllText(versionTxtPath) == Config.Instance.VersionId)
@@ -78,7 +89,8 @@ namespace Phrenapates.Services
 
             File.WriteAllText(versionTxtPath, Config.Instance.VersionId);
 
-            Log.Information($"Resource Version {Config.Instance.VersionId} downloaded!");        }
+            Log.Information($"Resource Version {Config.Instance.VersionId} downloaded!");
+        }
 
         /// <summary>
         /// Please <b>only</b> use this to get table that <b>have a respective file</b> (i.e. <c>CharacterExcelTable</c> have <c>characterexceltable.bytes</c>)
@@ -110,24 +122,29 @@ namespace Phrenapates.Services
             return (T)inst!;
         }
 
-        public List<T> GetExcelList<T>(string schema)
+        public List<T> GetExcelList<T>(string schema, bool bypassCache = false)
         {
             var excelList = new List<T>();
             var type = typeof(T);
+
+            if (!bypassCache && caches.TryGetValue(type, out var cache))
+                return (List<T>)cache;
+
             using (var dbConnection = new SQLiteConnection($"Data Source = {Path.Join(resourceDir, "ExcelDB.db")}"))
             {
                 dbConnection.Open();
                 var command = dbConnection.CreateCommand();
                 command.CommandText = $"SELECT Bytes FROM {schema}";
-                using (var reader = command.ExecuteReader())
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    while (reader.Read())
-                    {
-                        excelList.Add( (T)type.GetMethod( $"GetRootAs{type.Name}", BindingFlags.Static | BindingFlags.Public, [typeof(ByteBuffer)] )!
-                            .Invoke( null, [ new ByteBuffer( (byte[])reader[0] ) ] ));
-                    }
+                    excelList.Add((T)type.GetMethod($"GetRootAs{type.Name}", BindingFlags.Static | BindingFlags.Public, [typeof(ByteBuffer)])!
+                        .Invoke(null, [new ByteBuffer((byte[])reader[0])]));
                 }
             }
+
+            caches[type] = excelList!;
+            logger.LogDebug("{Excel} loaded and cached", type.Name);
 
             return excelList;
         }

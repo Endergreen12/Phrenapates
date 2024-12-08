@@ -4,6 +4,7 @@ using Plana.Database;
 using Plana.FlatData;
 using Plana.MX.GameLogic.DBModel;
 using Plana.MX.GameLogic.Parcel;
+using Plana.MX.Logic.Battles;
 using Plana.MX.Logic.Battles.Summary;
 using Plana.MX.NetworkProtocol;
 
@@ -260,7 +261,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
         public bool CheckIfCleared(BattleSummary summary)
         {
-            return !summary.IsAbort && summary.EndType == Plana.MX.Logic.Battles.BattleEndType.Clear;
+            return !summary.IsAbort && summary.EndType == BattleEndType.Clear;
         }
 
         public long GetChapterIdFromStageId(long stageId)
