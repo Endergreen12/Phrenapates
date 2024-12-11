@@ -372,29 +372,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             account.Mails.Add(Mail.CreateMail(req.AccountId));
             context.SaveChanges();
 
-            var RaidSeason = excelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList.LastOrDefault();
-            var TimeAttackDungeonSeason = excelTableService.GetTable<TimeAttackDungeonSeasonManageExcelTable>().UnPack().DataList.LastOrDefault();
-            var EliminateRaidSeason = excelTableService.GetTable<EliminateRaidSeasonManageExcelTable>().UnPack().DataList.LastOrDefault();
-
-            // Raid Assigment
-            account.ContentInfo.RaidDataInfo = new()
-            {
-                SeasonId = RaidSeason.SeasonId,
-                BestRankingPoint = 0,
-                TotalRankingPoint = 0
-            };
-            account.ContentInfo.TimeAttackDungeonDataInfo = new()
-            {
-                SeasonId = TimeAttackDungeonSeason.Id,
-            };
-            account.ContentInfo.EliminateRaidDataInfo = new()
-            {
-                SeasonId = EliminateRaidSeason.SeasonId,
-                BestRankingPoint = 0,
-                TotalRankingPoint = 0
-            };
-            context.SaveChanges();
-
             return new AccountCreateResponse()
             {
                 SessionKey = sessionKeyService.Create(account.PublisherAccountId)
