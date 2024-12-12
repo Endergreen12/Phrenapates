@@ -10,19 +10,34 @@ namespace Phrenapates.Managers
 {
     public class TimeAttackDungeonManager : Singleton<TimeAttackDungeonManager>
     {
+        public long SeasonId { get; private set; }
+        public DateTime OverrideServerTimeTicks { get; private set; }
         public Dictionary<long, TimeAttackDungeonRoomDB> TimeAttackDungeonRooms { get; private set; }
         public List<TimeAttackDungeonBattleHistoryDB> TimeAttackDungeonBattleHistoryDBs { get; private set; } = [];
-        public Dictionary<long, TimeAttackDungeonRoomDB> GetLobby() { return TimeAttackDungeonRooms; }
-        public TimeAttackDungeonRoomDB GetRoom() { return TimeAttackDungeonRooms[1]; }
+        
+        public DateTime CreateServerTime(List<TimeAttackDungeonSeasonManageExcelT> TADSeasonExcel, ContentInfo contentInfo)
+        {
+            if (OverrideServerTimeTicks == null || SeasonId != contentInfo.TimeAttackDungeonDataInfo.SeasonId)
+            {
+                var targetSeason = TADSeasonExcel.FirstOrDefault(x => x.Id == contentInfo.TimeAttackDungeonDataInfo.SeasonId);
+                OverrideServerTimeTicks = DateTime.Parse(targetSeason.StartDate);
+            }
+            return OverrideServerTimeTicks;
+        }
+
+        public DateTime GetServerTime() => OverrideServerTimeTicks;
+        public Dictionary<long, TimeAttackDungeonRoomDB> GetLobby() => TimeAttackDungeonRooms;
+        public TimeAttackDungeonRoomDB GetRoom() => TimeAttackDungeonRooms[1];
+
         public TimeAttackDungeonRoomDB GetPreviousRoom()
         {
             if (TimeAttackDungeonBattleHistoryDBs.Count == 3) return TimeAttackDungeonRooms[1];
             else return null;
         }
 
-        public TimeAttackDungeonRoomDB CreateBattle(long ownerId, bool IsPractice, ContentInfo raidinfo)
+        public TimeAttackDungeonRoomDB CreateBattle(long ownerId, bool IsPractice, ContentInfo contentInfo)
         {
-            if(TimeAttackDungeonRooms == null || TimeAttackDungeonRooms[1].SeasonId != raidinfo.TimeAttackDungeonDataInfo.SeasonId)
+            if(TimeAttackDungeonRooms == null || TimeAttackDungeonRooms[1].SeasonId != contentInfo.TimeAttackDungeonDataInfo.SeasonId)
             {
                 TimeAttackDungeonRooms = new Dictionary<long, TimeAttackDungeonRoomDB>
                 {
@@ -32,7 +47,7 @@ namespace Phrenapates.Managers
                         { 
                             RoomId = 1,
                             AccountId = ownerId,
-                            SeasonId = raidinfo.TimeAttackDungeonDataInfo.SeasonId,
+                            SeasonId = contentInfo.TimeAttackDungeonDataInfo.SeasonId,
                             CreateDate = DateTime.Now,
                             IsPractice = IsPractice
                         }

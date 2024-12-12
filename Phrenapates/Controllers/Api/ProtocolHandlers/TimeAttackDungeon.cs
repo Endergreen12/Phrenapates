@@ -30,12 +30,19 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.TimeAttackDungeon_Lobby)]
         public ResponsePacket TimeAttackDungeonLobbyHandler(TimeAttackDungeonLobbyRequest req)
         {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var TADSeasonExcel = excelTableService.GetTable<TimeAttackDungeonSeasonManageExcelTable>().UnPack().DataList;
+
             var currentRoom = TimeAttackDungeonManager.Instance.GetLobby();
             var previousRoom = TimeAttackDungeonManager.Instance.GetPreviousRoom();
-            var packet = new TimeAttackDungeonLobbyResponse();
+            var packet = new TimeAttackDungeonLobbyResponse
+            {
+                ServerTimeTicks = TimeAttackDungeonManager.Instance.CreateServerTime(TADSeasonExcel, account.ContentInfo).Ticks
+            };
 
             if (currentRoom != null) packet.RoomDBs = currentRoom;
             if (previousRoom != null) packet.PreviousRoomDB = previousRoom;
+
 
             return packet;
         }
@@ -48,6 +55,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             return new TimeAttackDungeonCreateBattleResponse()
             {
                 RoomDB = TimeAttackDungeonManager.Instance.CreateBattle(account.ServerId, req.IsPractice, account.ContentInfo),
+                ServerTimeTicks = TimeAttackDungeonManager.Instance.GetServerTime().Ticks
             };
         }
 
@@ -56,7 +64,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             return new TimeAttackDungeonEnterBattleResponse()
             {
-                AssistCharacterDB = new AssistCharacterDB()
+                AssistCharacterDB = new AssistCharacterDB(),
+                ServerTimeTicks = TimeAttackDungeonManager.Instance.GetServerTime().Ticks
             };
         }
 
@@ -99,6 +108,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 TotalPoint = totalpoint,
                 DefaultPoint = TADGeasData.ClearDefaultPoint,
                 TimePoint = timePoint,
+                ServerTimeTicks = TimeAttackDungeonManager.Instance.GetServerTime().Ticks
             };
         }
 
@@ -111,7 +121,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             return new TimeAttackDungeonGiveUpResponse()
             {
                 RoomDB = room,
-                SeasonBestRecord = account.ContentInfo.TimeAttackDungeonDataInfo.SeasonBestRecord
+                SeasonBestRecord = account.ContentInfo.TimeAttackDungeonDataInfo.SeasonBestRecord,
+                ServerTimeTicks = TimeAttackDungeonManager.Instance.GetServerTime().Ticks
             };
         }
     }
