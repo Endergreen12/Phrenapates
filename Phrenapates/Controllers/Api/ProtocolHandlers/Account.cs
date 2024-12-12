@@ -476,6 +476,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 EliminateRaidLoginResponse = new EliminateRaidLoginResponse()
                 {
                     SeasonType = RaidSeasonType.Open,
+                    SweepPointByRaidUniqueId = new()
                 },
 
                 //CraftInfoListResponse = new CraftInfoListResponse(),
@@ -514,6 +515,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                         new() { EventContentId = 900813 },
                         new() { EventContentId = 900816 },
                         new() { EventContentId = 900701 },
+                        new() { EventContentId = 900815 },
                     ],
                 },
 
@@ -524,9 +526,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 MultiFloorRaidSyncResponse = new MultiFloorRaidSyncResponse(),
                 FriendCount = 0,*/
                 FriendCode = "SUS",
-                /*StaticOpenConditions = Enum.GetValues(typeof(OpenConditionContent))
+                StaticOpenConditions = Enum.GetValues(typeof(OpenConditionContent))
                     .Cast<OpenConditionContent>()
-                    .ToDictionary(key => key, key => OpenConditionLockReason.None)*/
+                    .ToDictionary(key => key, key => OpenConditionLockReason.None)
             };
         }
 

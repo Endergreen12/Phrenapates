@@ -83,7 +83,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
             return new MultiFloorRaidEndBattleResponse()
             {
-                MultiFloorRaidDB = sessionKeyService.GetAccount(req.SessionKey).MultiFloorRaids.LastOrDefault() ?? new(),
+                MultiFloorRaidDB = account.MultiFloorRaids.LastOrDefault() ?? new(),
                 ParcelResultDB = new()
             };
         }

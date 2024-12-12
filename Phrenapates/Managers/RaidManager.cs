@@ -21,7 +21,7 @@ namespace Phrenapates.Managers
             {
                 RaidLobbyInfoDB = new SingleRaidLobbyInfoDB()
                 {
-                    Tier = 0,
+                    Tier = 4,
                     Ranking = 1,
                     SeasonId = raidInfo.RaidDataInfo.SeasonId,
                     BestRankingPoint = 0,
@@ -31,7 +31,7 @@ namespace Phrenapates.Managers
                     {
                         { targetSeasonData.OpenRaidBossGroup.FirstOrDefault(), Difficulty.Torment }
                     },
-                    ClanAssistUseInfo = new(),
+                    SweepPointByRaidUniqueId = [],
                     SeasonStartDate = DateTime.Now.AddHours(-1),
                     SeasonEndDate = DateTime.Now.AddDays(7),
                     SettlementEndDate = DateTime.Now.AddDays(8),
@@ -39,7 +39,10 @@ namespace Phrenapates.Managers
                     NextSeasonStartDate = DateTime.Now.AddMonths(1),
                     NextSeasonEndDate = DateTime.Now.AddMonths(1).AddDays(7),
                     NextSettlementEndDate = DateTime.Now.AddMonths(1).AddDays(8),
-                    RemainFailCompensation = new() { { 0, true } }
+                    RemainFailCompensation = new() { { 0, true } },
+                    ReceivedRankingRewardId = new(),
+                    ReceiveLimitedRewardIds = new(),
+                    CanReceiveRankingReward = new(),
                 };
             } 
             
@@ -154,14 +157,15 @@ namespace Phrenapates.Managers
                 RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds[keyId] = characterId;
                 RaidLobbyInfoDB.ParticipateCharacterServerIds = characterId;
             }
-            Console.WriteLine(JsonSerializer.Serialize(RaidLobbyInfoDB));
+            //Console.WriteLine(JsonSerializer.Serialize(RaidLobbyInfoDB));
             return RaidLobbyInfoDB;
         }
 
         public void ClearPlayingBossDB()
         {
             RaidDB = null;
-            RaidLobbyInfoDB.PlayingRaidDB = RaidDB;
+            RaidLobbyInfoDB = null;
+            RaidBattleDB = null;
         }
     }
 }

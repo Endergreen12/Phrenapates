@@ -39,10 +39,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket CreateBattleHandler(RaidCreateBattleRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
+
             var raidStageTable = excelTableService.GetTable<RaidStageExcelTable>().UnPack().DataList;
-            var raidExcelTable = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
+            var characterStatExcel = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
             var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == req.RaidUniqueId);
-            var bossData = raidExcelTable.FirstOrDefault(x => x.CharacterId == currentRaidData.BossCharacterId.FirstOrDefault());
+            var bossData = characterStatExcel.FirstOrDefault(x => x.CharacterId == currentRaidData.BossCharacterId.FirstOrDefault());
 
             account.ContentInfo.RaidDataInfo.CurrentRaidUniqueId = req.RaidUniqueId;
             account.ContentInfo.RaidDataInfo.CurrentDifficulty = req.Difficulty;

@@ -24,15 +24,15 @@ namespace Phrenapates.Commands
                 case "raid":
                     if (long.TryParse(value, out seasonId))
                     {
-                        var raidSeasonName = connection.ExcelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList.FirstOrDefault(x => x.SeasonId == seasonId);
+                        var raidSeason = connection.ExcelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList.FirstOrDefault(x => x.SeasonId == seasonId);
                         connection.Account.ContentInfo.RaidDataInfo.SeasonId = seasonId;
                         connection.Account.ContentInfo.RaidDataInfo.BestRankingPoint = 0;
                         connection.Account.ContentInfo.RaidDataInfo.TotalRankingPoint = 0;
 
-                        connection.SendChatMessage($"Raid Name: {string.Join(", ", raidSeasonName.OpenRaidBossGroup)}");
-                        connection.SendChatMessage($"Raid ID: {raidSeasonName.SeasonId}");
-                        connection.SendChatMessage($"Raid StartTime: {raidSeasonName.SeasonStartData}");
-                        connection.SendChatMessage($"Raid EndTime: {raidSeasonName.SeasonEndData}");
+                        connection.SendChatMessage($"Raid Boss: {string.Join(", ", raidSeason.OpenRaidBossGroup)}");
+                        connection.SendChatMessage($"Raid ID: {raidSeason.SeasonId}");
+                        connection.SendChatMessage($"Raid StartTime: {raidSeason.SeasonStartData}");
+                        connection.SendChatMessage($"Raid EndTime: {raidSeason.SeasonEndData}");
                         connection.SendChatMessage($"Total Assault Raid is set to {seasonId}");
                         connection.Context.SaveChanges();
                     }
@@ -49,7 +49,7 @@ namespace Phrenapates.Commands
                         connection.Account.ContentInfo.TimeAttackDungeonDataInfo.SeasonId = seasonId;
                         connection.Account.ContentInfo.TimeAttackDungeonDataInfo.SeasonBestRecord = 0;
 
-                        connection.SendChatMessage($"Time Attack Dungeon Name: {string.Join(", ", TADExcel.TimeAttackDungeonType)}");
+                        connection.SendChatMessage($"Time Attack Dungeon Type: {string.Join(", ", TADExcel.TimeAttackDungeonType)}");
                         connection.SendChatMessage($"Time Attack Dungeon ID: {TADSeasonData.Id}");
                         connection.SendChatMessage($"Time Attack Dungeon StartTime: {TADSeasonData.StartDate}");
                         connection.SendChatMessage($"Time Attack Dungeon EndTime: {TADSeasonData.EndDate}");
@@ -62,8 +62,29 @@ namespace Phrenapates.Commands
                     }
                     break;
                 case "eliminateraid":
-                    connection.SendChatMessage($"Eliminate Raid command isn't implemented yet!");
-                    connection.Context.SaveChanges();
+                    if (long.TryParse(value, out seasonId))
+                    {
+                        var eliminateRaidSeason = connection.ExcelTableService.GetTable<EliminateRaidSeasonManageExcelTable>().UnPack().DataList.FirstOrDefault(x => x.SeasonId == seasonId);
+                        connection.Account.ContentInfo.EliminateRaidDataInfo.SeasonId = seasonId;
+                        connection.Account.ContentInfo.EliminateRaidDataInfo.BestRankingPoint = 0;
+                        connection.Account.ContentInfo.EliminateRaidDataInfo.TotalRankingPoint = 0;
+                        
+                        List<string> raidBoss = [
+                            eliminateRaidSeason.OpenRaidBossGroup01,
+                            eliminateRaidSeason.OpenRaidBossGroup02,
+                            eliminateRaidSeason.OpenRaidBossGroup03
+                        ];
+                        connection.SendChatMessage($"All Eliminate Raid Boss: {string.Join(", ", raidBoss)}");
+                        connection.SendChatMessage($"Eliminate Raid ID: {eliminateRaidSeason.SeasonId}");
+                        connection.SendChatMessage($"Eliminate Raid StartTime: {eliminateRaidSeason.SeasonStartData}");
+                        connection.SendChatMessage($"Eliminate Raid EndTime: {eliminateRaidSeason.SeasonEndData}");
+                        connection.SendChatMessage($"Grand Assault Raid is set to {seasonId}");
+                        connection.Context.SaveChanges();
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Invalid Value");
+                    }
                     break;
                 case "arena":
                     connection.SendChatMessage($"Arena command isn't implemented yet!");
