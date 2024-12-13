@@ -24,7 +24,14 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.TimeAttackDungeon_Login)]
         public ResponsePacket TimeAttackDungeonLoginHandler(TimeAttackDungeonLoginRequest req)
         {
-            return new TimeAttackDungeonLoginResponse();
+            //Incase this protocol gets called
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var TADSeasonExcel = excelTableService.GetTable<TimeAttackDungeonSeasonManageExcelTable>().UnPack().DataList;
+            var targetSeason = TADSeasonExcel.FirstOrDefault(x => x.Id == account.ContentInfo.TimeAttackDungeonDataInfo.SeasonId);
+            return new TimeAttackDungeonLoginResponse()
+            {
+                ServerTimeTicks = TimeAttackDungeonManager.Instance.CreateServerTime(targetSeason, account.ContentInfo).Ticks
+            };
         }
 
         [ProtocolHandler(Protocol.TimeAttackDungeon_Lobby)]
@@ -32,12 +39,13 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
             var TADSeasonExcel = excelTableService.GetTable<TimeAttackDungeonSeasonManageExcelTable>().UnPack().DataList;
+            var targetSeason = TADSeasonExcel.FirstOrDefault(x => x.Id == account.ContentInfo.TimeAttackDungeonDataInfo.SeasonId);
 
             var currentRoom = TimeAttackDungeonManager.Instance.GetLobby();
             var previousRoom = TimeAttackDungeonManager.Instance.GetPreviousRoom();
             var packet = new TimeAttackDungeonLobbyResponse
             {
-                ServerTimeTicks = TimeAttackDungeonManager.Instance.CreateServerTime(TADSeasonExcel, account.ContentInfo).Ticks
+                ServerTimeTicks = TimeAttackDungeonManager.Instance.CreateServerTime(targetSeason, account.ContentInfo).Ticks
             };
 
             if (currentRoom != null) packet.RoomDBs = currentRoom;

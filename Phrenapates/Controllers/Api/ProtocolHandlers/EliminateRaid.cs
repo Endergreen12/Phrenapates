@@ -33,11 +33,13 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             var raidSeasonExcel = excelTableService.GetTable<EliminateRaidSeasonManageExcelTable>().UnPack().DataList;
             var targetSeason = raidSeasonExcel.FirstOrDefault(x => x.SeasonId == account.ContentInfo.EliminateRaidDataInfo.SeasonId);
+            var serverTimeTicks = EliminateRaidManager.Instance.CreateServerTime(targetSeason, account.ContentInfo).Ticks;
 
             return new EliminateRaidLobbyResponse()
             {
                 SeasonType = RaidSeasonType.Open,
                 RaidLobbyInfoDB = EliminateRaidManager.Instance.GetLobby(account.ContentInfo, targetSeason),
+                ServerTimeTicks = serverTimeTicks
             };
         }
 
@@ -81,7 +83,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             {
                 RaidDB = raid,
                 RaidBattleDB = battle,
-                AssistCharacterDB = assistCharacter
+                AssistCharacterDB = assistCharacter,
+                ServerTimeTicks = EliminateRaidManager.Instance.GetServerTime().Ticks
             };
         }
 
@@ -109,7 +112,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             {
                 RaidDB = raid,
                 RaidBattleDB = battle,
-                AssistCharacterDB = assistCharacter
+                AssistCharacterDB = assistCharacter,
+                ServerTimeTicks = EliminateRaidManager.Instance.GetServerTime().Ticks
             };
         }
 
@@ -121,7 +125,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var raidStageTable = excelTableService.GetTable<EliminateRaidStageExcelTable>().UnPack().DataList;
             var raidExcelTable = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
             var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.ContentInfo.EliminateRaidDataInfo.CurrentRaidUniqueId);
-            Console.WriteLine(JsonSerializer.Serialize(currentRaidData));
+            //Console.WriteLine(JsonSerializer.Serialize(currentRaidData));
             var bossData = raidExcelTable.FirstOrDefault(x => x.CharacterId == currentRaidData.BossCharacterId.FirstOrDefault());
 
             var raidLobbyInfoDB = EliminateRaidManager.Instance.EliminateRaidLobbyInfoDB;
@@ -166,7 +170,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 BestRankingPoint = account.ContentInfo.EliminateRaidDataInfo.BestRankingPoint,
                 ClearTimePoint = timeScore,
                 HPPercentScorePoint = hpPercentScorePoint,
-                DefaultClearPoint = defaultClearPoint
+                DefaultClearPoint = defaultClearPoint,
+                ServerTimeTicks = EliminateRaidManager.Instance.GetServerTime().Ticks
             };
         }
 
@@ -175,7 +180,30 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             return new EliminateRaidOpponentListResponse()
             {
-                OpponentUserDBs = []
+                OpponentUserDBs = [],
+                ServerTimeTicks = EliminateRaidManager.Instance.GetServerTime().Ticks
+
+            };
+        }
+
+        [ProtocolHandler(Protocol.EliminateRaid_GiveUp)]
+        public ResponsePacket GiveUpHandler(EliminateRaidGiveUpRequest req)
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+
+            var giveUpRaid = new RaidGiveUpDB()
+            {
+                Ranking = 1,
+                RankingPoint = account.ContentInfo.RaidDataInfo.TotalRankingPoint,
+                BestRankingPoint = account.ContentInfo.RaidDataInfo.BestRankingPoint
+            };
+
+            EliminateRaidManager.Instance.ClearPlayingBossDB();
+
+            return new EliminateRaidGiveUpResponse()
+            {
+                RaidGiveUpDB = giveUpRaid,
+                ServerTimeTicks = EliminateRaidManager.Instance.GetServerTime().Ticks
             };
         }
     }

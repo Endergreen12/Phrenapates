@@ -10,16 +10,15 @@ namespace Phrenapates.Managers
 {
     public class TimeAttackDungeonManager : Singleton<TimeAttackDungeonManager>
     {
-        public long SeasonId { get; private set; }
-        public DateTime OverrideServerTimeTicks { get; private set; }
         public Dictionary<long, TimeAttackDungeonRoomDB> TimeAttackDungeonRooms { get; private set; }
         public List<TimeAttackDungeonBattleHistoryDB> TimeAttackDungeonBattleHistoryDBs { get; private set; } = [];
+        public long SeasonId { get; private set; }
+        public DateTime OverrideServerTimeTicks { get; private set; }
         
-        public DateTime CreateServerTime(List<TimeAttackDungeonSeasonManageExcelT> TADSeasonExcel, ContentInfo contentInfo)
+        public DateTime CreateServerTime(TimeAttackDungeonSeasonManageExcelT targetSeason, ContentInfo contentInfo)
         {
             if (OverrideServerTimeTicks == null || SeasonId != contentInfo.TimeAttackDungeonDataInfo.SeasonId)
             {
-                var targetSeason = TADSeasonExcel.FirstOrDefault(x => x.Id == contentInfo.TimeAttackDungeonDataInfo.SeasonId);
                 OverrideServerTimeTicks = DateTime.Parse(targetSeason.StartDate);
             }
             return OverrideServerTimeTicks;
@@ -48,7 +47,7 @@ namespace Phrenapates.Managers
                             RoomId = 1,
                             AccountId = ownerId,
                             SeasonId = contentInfo.TimeAttackDungeonDataInfo.SeasonId,
-                            CreateDate = DateTime.Now,
+                            CreateDate = OverrideServerTimeTicks,
                             IsPractice = IsPractice
                         }
                     }

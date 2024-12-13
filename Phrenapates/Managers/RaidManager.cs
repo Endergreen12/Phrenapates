@@ -10,10 +10,21 @@ namespace Phrenapates.Managers
     public class RaidManager : Singleton<RaidManager>
     {
         public SingleRaidLobbyInfoDB RaidLobbyInfoDB { get; private set; }
-
         public RaidDB RaidDB { get; private set; }
-
         public RaidBattleDB RaidBattleDB { get; private set; }
+        public long SeasonId { get; private set; }
+        public DateTime OverrideServerTimeTicks { get; private set; }
+
+        public DateTime CreateServerTime(RaidSeasonManageExcelT targetSeason, ContentInfo contentInfo)
+        {
+            if (OverrideServerTimeTicks == null || SeasonId != contentInfo.RaidDataInfo.SeasonId)
+            {
+                OverrideServerTimeTicks = DateTime.Parse(targetSeason.SeasonStartData);
+            }
+            return OverrideServerTimeTicks;
+        }
+
+        public DateTime GetServerTime() => OverrideServerTimeTicks;
 
         public SingleRaidLobbyInfoDB GetLobby(ContentInfo raidInfo, RaidSeasonManageExcelT targetSeasonData)
         {
@@ -32,13 +43,13 @@ namespace Phrenapates.Managers
                         { targetSeasonData.OpenRaidBossGroup.FirstOrDefault(), Difficulty.Torment }
                     },
                     SweepPointByRaidUniqueId = [],
-                    SeasonStartDate = DateTime.Now.AddHours(-1),
-                    SeasonEndDate = DateTime.Now.AddDays(7),
-                    SettlementEndDate = DateTime.Now.AddDays(8),
-                    NextSeasonId = 300,
-                    NextSeasonStartDate = DateTime.Now.AddMonths(1),
-                    NextSeasonEndDate = DateTime.Now.AddMonths(1).AddDays(7),
-                    NextSettlementEndDate = DateTime.Now.AddMonths(1).AddDays(8),
+                    SeasonStartDate = OverrideServerTimeTicks.AddHours(-1),
+                    SeasonEndDate = OverrideServerTimeTicks.AddDays(7),
+                    SettlementEndDate = OverrideServerTimeTicks.AddDays(8),
+                    NextSeasonId = 999,
+                    NextSeasonStartDate = OverrideServerTimeTicks.AddMonths(1),
+                    NextSeasonEndDate = OverrideServerTimeTicks.AddMonths(1).AddDays(7),
+                    NextSettlementEndDate = OverrideServerTimeTicks.AddMonths(1).AddDays(8),
                     RemainFailCompensation = new() { { 0, true } },
                     ReceivedRankingRewardId = new(),
                     ReceiveLimitedRewardIds = new(),
@@ -76,8 +87,8 @@ namespace Phrenapates.Managers
                     UniqueId = raidId,
                     ServerId = 1,
                     SecretCode = "0",
-                    Begin = DateTime.Now,
-                    End = DateTime.Now.AddHours(1),
+                    Begin = OverrideServerTimeTicks,
+                    End = OverrideServerTimeTicks.AddHours(1),
                     PlayerCount = 1,
                     IsPractice = isPractice,
                     AccountLevelWhenCreateDB = ownerLevel,
