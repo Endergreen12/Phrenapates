@@ -17,15 +17,24 @@ namespace Phrenapates.Commands
         public override void Execute()
         {
             var context = connection.Context;
+            var options = Options.ToLower();
+            List<string> optionList = ["basic", "ue30", "ue50", "max"];
+
+            if (!optionList.Contains(options))
+            {
+                connection.SendChatMessage("Unknown options!");
+                connection.SendChatMessage("Usage: /inventory addall ue50");
+                return;
+            }
 
             switch (Op.ToLower())
             {
                 case "addall":
-                    InventoryUtils.AddAllCharacters(connection, Options);
-                    InventoryUtils.AddAllWeapons(connection, Options);
-                    InventoryUtils.AddAllEquipment(connection, Options);
+                    InventoryUtils.AddAllCharacters(connection, options);
+                    InventoryUtils.AddAllWeapons(connection, options);
+                    InventoryUtils.AddAllEquipment(connection, options);
                     InventoryUtils.AddAllItems(connection);
-                    InventoryUtils.AddAllGears(connection, Options);
+                    InventoryUtils.AddAllGears(connection, options);
                     InventoryUtils.AddAllMemoryLobbies(connection);
                     InventoryUtils.AddAllScenarios(connection);
                     InventoryUtils.AddAllFurnitures(connection);
