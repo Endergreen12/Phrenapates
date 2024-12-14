@@ -24,7 +24,7 @@ namespace Phrenapates.Commands
                 case "add":
                     if (Target == "all")
                     {
-                        InventoryUtils.AddAllCharacters(connection);
+                        InventoryUtils.AddAllCharacters(connection, "max");
 
                         connection.SendChatMessage("All Characters Added!");
                     }
@@ -55,7 +55,7 @@ namespace Phrenapates.Commands
                     break;
                 
                 default:
-                    connection.SendChatMessage($"Usage: /character unlock=<all|clear|characterId>");
+                    connection.SendChatMessage($"Usage: /character <add|clear> add=[characterId]");
                     throw new InvalidOperationException("Invalid operation!");
             }
 

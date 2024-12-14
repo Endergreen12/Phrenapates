@@ -18,7 +18,7 @@ namespace Phrenapates.Commands
         {
             var currencyType = CurrencyTypes.Invalid;
             long amount = 0;
-            if(Enum.TryParse<CurrencyTypes>(id, true, out currencyType) && currencyType != CurrencyTypes.Invalid && Int64.TryParse(amountStr, out amount))
+            if(Enum.TryParse(id, true, out currencyType) && currencyType != CurrencyTypes.Invalid && long.TryParse(amountStr, out amount))
             {
                 var currencies = connection.Account.Currencies.First();
                 currencies.CurrencyDict[currencyType] = amount;

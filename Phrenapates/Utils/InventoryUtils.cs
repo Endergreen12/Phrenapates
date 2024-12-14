@@ -3,12 +3,13 @@ using Plana.Database.ModelExtensions;
 using Plana.FlatData;
 using Phrenapates.Services.Irc;
 using System.Data;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Plana.Utils
 {
     public static class InventoryUtils
     {
-        public static void AddAllCharacters(IrcConnection connection, bool maxed = true)
+        public static void AddAllCharacters(IrcConnection connection, string addOption)
         {
             var account = connection.Account;
             var context = connection.Context;
@@ -17,6 +18,38 @@ namespace Plana.Utils
             var defaultCharacterExcel = connection.ExcelTableService.GetTable<DefaultCharacterExcelTable>().UnPack().DataList;
             var characterLevelExcel = connection.ExcelTableService.GetTable<CharacterLevelExcelTable>().UnPack().DataList;
             var favorLevelExcel = connection.ExcelTableService.GetTable<FavorLevelExcelTable>().UnPack().DataList;
+
+            bool useOptions = false;
+            int starGrade = 3;
+            int favorRank = 1;
+            bool breakLimit = false;
+
+            if (!addOption.IsNullOrEmpty()) useOptions = true;
+
+            switch(addOption)
+            {
+                case "basic":
+                    starGrade = 3;
+                    favorRank = 20;
+                    break;
+                case "ue30":
+                    starGrade = 5;
+                    favorRank = 20;
+                    breakLimit = true;
+                    break;
+                case "ue50":
+                    starGrade = 5;
+                    favorRank = 50;
+                    breakLimit = true;
+                    break;
+                case "max":
+                    starGrade = 5;
+                    favorRank = 100;
+                    breakLimit = true;
+                    break;
+                default:
+                    return;
+            }
 
             var allCharacters = characterExcel.Where(x =>
                 x is
@@ -32,18 +65,20 @@ namespace Plana.Utils
                 return new CharacterDB()
                 {
                     UniqueId = x.Id,
-                    StarGrade = maxed ? x.MaxStarGrade : x.DefaultStarGrade,
-                    Level = maxed ? characterLevelExcel.Count : 1,
+                    StarGrade = useOptions ? starGrade : x.DefaultStarGrade,
+                    Level = useOptions ? characterLevelExcel.Count : 1,
                     Exp = 0,
-                    PublicSkillLevel = maxed ? 10 : 1,
-                    ExSkillLevel = maxed ? 5 : 1,
-                    PassiveSkillLevel = maxed ? 10 : 1,
-                    ExtraPassiveSkillLevel = maxed ? 10 : 1,
+                    ExSkillLevel = useOptions ? 5 : 1,
+                    PublicSkillLevel = useOptions ? 10 : 1,
+                    PassiveSkillLevel = useOptions ? 10 : 1,
+                    ExtraPassiveSkillLevel = useOptions ? 10 : 1,
                     LeaderSkillLevel = 1,
-                    FavorRank = maxed ? favorLevelExcel.Count : 1,
+                    FavorRank = useOptions ? favorRank : 1,
                     IsNew = true,
                     IsLocked = true,
-                    PotentialStats = maxed ? new Dictionary<int, int> { { 1, 25 }, { 2, 25 }, { 3, 25 } } : new Dictionary<int, int> { { 1, 0 }, { 2, 0 }, { 3, 0 } },
+                    PotentialStats = breakLimit ? 
+                        new Dictionary<int, int> { { 1, 25 }, { 2, 25 }, { 3, 25 } } :
+                        new Dictionary<int, int> { { 1, 0 }, { 2, 0 }, { 3, 0 } },
                     EquipmentServerIds = [0, 0, 0]
                 };
             }).ToList();
@@ -51,16 +86,20 @@ namespace Plana.Utils
             foreach (var character in account.Characters.Where(x => characterExcel.Any(y => y.Id == x.UniqueId)))
             {
                 var updateCharacter = character;
-                updateCharacter.StarGrade = maxed ? characterExcel.FirstOrDefault(y => y.Id == character.UniqueId).MaxStarGrade : characterExcel.FirstOrDefault(y => y.Id == character.UniqueId).DefaultStarGrade;
-                updateCharacter.PublicSkillLevel = maxed ? 10 : 1;
-                updateCharacter.ExSkillLevel = maxed ? 5 : 1;
-                updateCharacter.PassiveSkillLevel = maxed ? 10 : 1;
-                updateCharacter.ExtraPassiveSkillLevel = maxed ? 10 : 1;
-                updateCharacter.Level = maxed ? characterLevelExcel.Count : 1;
+                updateCharacter.StarGrade = useOptions ? starGrade : characterExcel.FirstOrDefault(y => y.Id == character.UniqueId).DefaultStarGrade;;
+                updateCharacter.Level = useOptions ? characterLevelExcel.Count : 1;
                 updateCharacter.Exp = 0;
-                updateCharacter.FavorRank = maxed ? favorLevelExcel.Count : 1;
-                updateCharacter.PotentialStats = maxed ? new Dictionary<int, int> { { 1, 25 }, { 2, 25 }, { 3, 25 } } : new Dictionary<int, int> { { 1, 0 }, { 2, 0 }, { 3, 0 } };
-                updateCharacter.EquipmentServerIds = [0, 0, 0];
+                updateCharacter.ExSkillLevel = useOptions ? 5 : 1;
+                updateCharacter.PublicSkillLevel = useOptions ? 10 : 1;
+                updateCharacter.PassiveSkillLevel = useOptions ? 10 : 1;
+                updateCharacter.ExtraPassiveSkillLevel = useOptions ? 10 : 1;
+                updateCharacter.LeaderSkillLevel = 1;
+                updateCharacter.FavorRank = useOptions ? favorRank : 1;
+                updateCharacter.IsNew = true;
+                updateCharacter.IsLocked = true;
+                updateCharacter.PotentialStats = breakLimit ? 
+                    new Dictionary<int, int> { { 1, 25 }, { 2, 25 }, { 3, 25 } } :
+                    new Dictionary<int, int> { { 1, 0 }, { 2, 0 }, { 3, 0 } };
                 connection.Context.Characters.Update(updateCharacter);
             }
 
@@ -70,11 +109,31 @@ namespace Plana.Utils
             connection.SendChatMessage("Added all characters!");
         }
 
-        public static void AddAllEquipment(IrcConnection connection, bool maxed = true)
+        public static void AddAllEquipment(IrcConnection connection, string addOption)
         {
             var equipmentExcel = connection.ExcelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
             
-            if(!maxed)
+            var useEquipment = false;
+            switch(addOption)
+            {
+                case "basic":
+                    useEquipment = true;
+                    break;
+                case "ue30":
+                    useEquipment = true;
+                    break;
+                case "ue50":
+                    useEquipment = true;
+                    break;
+                case "max":
+                    useEquipment = true;
+                    break;
+                default:
+                    return;
+            }
+
+
+            if(!useEquipment)
             {
                 connection.Context.Equipment.RemoveRange(connection.Context.Equipment.Where(x => x.AccountServerId == connection.AccountServerId));
                 var allEquipment = equipmentExcel.Select(x =>
@@ -139,12 +198,28 @@ namespace Plana.Utils
             connection.SendChatMessage("Added all items!");
         }
 
-        public static void AddAllWeapons(IrcConnection connection, bool maxed = true)
+        public static void AddAllWeapons(IrcConnection connection, string addOption)
         {
             var account = connection.Account;
             var context = connection.Context;
 
-            if(!maxed)
+            int weaponLevel = 1;
+            switch(addOption)
+            {
+                case "ue30":
+                    weaponLevel = 30;
+                    break;
+                case "ue50":
+                    weaponLevel = 50;
+                    break;
+                case "max":
+                    weaponLevel = 50;
+                    break;
+                default:
+                    return;
+            }
+
+            if(weaponLevel == 1)
             {
                 context.Weapons.RemoveRange(context.Weapons.Where(x => x.AccountServerId == connection.AccountServerId));
                 context.SaveChanges();
@@ -161,7 +236,7 @@ namespace Plana.Utils
                     BoundCharacterServerId = x.ServerId,
                     IsLocked = false,
                     StarGrade = weaponExcel.FirstOrDefault(y => y.Id == x.UniqueId).Unlock.TakeWhile(y => y).Count(),
-                    Level = 50
+                    Level = weaponLevel
                 };
             });
 
@@ -171,11 +246,31 @@ namespace Plana.Utils
             connection.SendChatMessage("Added all weapons!");
         }
 
-        public static void AddAllGears(IrcConnection connection, bool maxed = true)
+        public static void AddAllGears(IrcConnection connection, string addOption)
         {
             var account = connection.Account;
             var context = connection.Context;
-            if(!maxed)
+
+            bool useGear = false;
+            switch(addOption)
+            {
+                case "basic":
+                    useGear = true;
+                    break;
+                case "ue30":
+                    useGear = true;
+                    break;
+                case "ue50":
+                    useGear = true;
+                    break;
+                case "max":
+                    useGear = true;
+                    break;
+                default:
+                    return;
+            }
+
+            if(!useGear)
             {
                 context.Gears.RemoveRange(context.Gears.Where(x => x.AccountServerId == connection.AccountServerId));
                 context.SaveChanges();
@@ -184,7 +279,7 @@ namespace Plana.Utils
 
             var uniqueGearExcel = connection.ExcelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
 
-            var uniqueGear = uniqueGearExcel.Where(x => x.Tier == (maxed ? 2 : 1) && context.Characters.Any(y => y.UniqueId == x.CharacterId)).Select(x => 
+            var uniqueGear = uniqueGearExcel.Where(x => x.Tier == (useGear ? 2 : 1) && context.Characters.Any(y => y.UniqueId == x.CharacterId)).Select(x => 
                 new GearDB()
                 {
                     UniqueId = x.Id,

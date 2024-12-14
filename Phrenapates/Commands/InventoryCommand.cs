@@ -3,13 +3,16 @@ using Phrenapates.Services.Irc;
 
 namespace Phrenapates.Commands
 {
-    [CommandHandler("inventory", "Command to manage inventory (chars, weapons, equipment, items)", "/inventory <addall|addallmax|removeall>")]
+    [CommandHandler("inventory", "Command to manage inventory (chars, weapons, equipment, items)", "/inventory <addall|removeall> [basic|ue30|ue50|max]")]
     internal class InventoryCommand : Command
     {
         public InventoryCommand(IrcConnection connection, string[] args, bool validate = true) : base(connection, args, validate) { }
 
-        [Argument(0, @"^addall|^addallmax$|^removeall$", "The operation selected (addall, addallmax, removeall)", ArgumentFlags.IgnoreCase)]
+        [Argument(0, @"^addall|^removeall$", "The operation selected (addall, removeall)", ArgumentFlags.IgnoreCase)]
         public string Op { get; set; } = string.Empty;
+
+        [Argument(1, @"^basic|^ue30$|^ue50$|^max$", "The options selected (basic, ue30, ue50, max)", ArgumentFlags.Optional)]
+        public string Options { get; set; } = string.Empty;
 
         public override void Execute()
         {
@@ -18,31 +21,17 @@ namespace Phrenapates.Commands
             switch (Op.ToLower())
             {
                 case "addall":
-                    InventoryUtils.AddAllCharacters(connection, false);
-                    InventoryUtils.AddAllWeapons(connection, false);
-                    InventoryUtils.AddAllEquipment(connection, false);
+                    InventoryUtils.AddAllCharacters(connection, Options);
+                    InventoryUtils.AddAllWeapons(connection, Options);
+                    InventoryUtils.AddAllEquipment(connection, Options);
                     InventoryUtils.AddAllItems(connection);
-                    InventoryUtils.AddAllGears(connection, false);
+                    InventoryUtils.AddAllGears(connection, Options);
                     InventoryUtils.AddAllMemoryLobbies(connection);
                     InventoryUtils.AddAllScenarios(connection);
                     InventoryUtils.AddAllFurnitures(connection);
 
                     connection.SendChatMessage("Added Everything!");
                     break;
-
-                case "addallmax":
-                    InventoryUtils.AddAllCharacters(connection);
-                    InventoryUtils.AddAllWeapons(connection);
-                    InventoryUtils.AddAllEquipment(connection);
-                    InventoryUtils.AddAllItems(connection);
-                    InventoryUtils.AddAllGears(connection);
-                    InventoryUtils.AddAllMemoryLobbies(connection);
-                    InventoryUtils.AddAllScenarios(connection);
-                    InventoryUtils.AddAllFurnitures(connection);
-
-                    connection.SendChatMessage("Added Everything!");
-                    break;
-
                 case "removeall":
                     InventoryUtils.RemoveAllCharacters(connection);
                     context.Weapons.RemoveRange(context.Weapons.Where(x => x.AccountServerId == connection.AccountServerId));

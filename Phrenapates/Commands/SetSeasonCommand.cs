@@ -3,12 +3,12 @@ using Phrenapates.Services.Irc;
 
 namespace Phrenapates.Commands
 {
-    [CommandHandler("setseason", "Set season of content (raid, arena)", "/setseason <raid|arena> <seasonid>")]
+    [CommandHandler("setseason", "Set season of content (raid, timeattackdungeon, eliminateraid, arena)", "/setseason <raid|timeattackdungeon|eliminateraid|arena> <seasonid>")]
     internal class SetSeason : Command
     {
         public SetSeason(IrcConnection connection, string[] args, bool validate = true) : base(connection, args, validate) { }
 
-        [Argument(0, @"", "Target content name (raid, arena)", ArgumentFlags.IgnoreCase)]
+        [Argument(0, @"", "Target content name (raid, timeattackdungeon, eliminateraid, arena)", ArgumentFlags.IgnoreCase)]
         public string target { get; set; } = string.Empty;
 
         [Argument(1, @"^[0-9]", "Target season id", ArgumentFlags.IgnoreCase)]
@@ -29,10 +29,9 @@ namespace Phrenapates.Commands
                         connection.Account.ContentInfo.RaidDataInfo.BestRankingPoint = 0;
                         connection.Account.ContentInfo.RaidDataInfo.TotalRankingPoint = 0;
 
-                        connection.SendChatMessage($"Raid Boss: {string.Join(", ", raidSeason.OpenRaidBossGroup)}");
-                        connection.SendChatMessage($"Raid ID: {raidSeason.SeasonId}");
-                        connection.SendChatMessage($"Raid StartTime: {raidSeason.SeasonStartData}");
-                        connection.SendChatMessage($"Raid EndTime: {raidSeason.SeasonEndData}");
+                        connection.SendChatMessage($"Total Assault Boss: {string.Join(", ", raidSeason.OpenRaidBossGroup)}");
+                        connection.SendChatMessage($"Total Assault ID: {raidSeason.SeasonId}");
+                        connection.SendChatMessage($"Total Assault StartTime: {raidSeason.SeasonStartData}");
                         connection.SendChatMessage($"Total Assault Raid is set to {seasonId}");
                         connection.Context.SaveChanges();
                     }
@@ -49,11 +48,10 @@ namespace Phrenapates.Commands
                         connection.Account.ContentInfo.TimeAttackDungeonDataInfo.SeasonId = seasonId;
                         connection.Account.ContentInfo.TimeAttackDungeonDataInfo.SeasonBestRecord = 0;
 
-                        connection.SendChatMessage($"Time Attack Dungeon Type: {string.Join(", ", TADExcel.TimeAttackDungeonType)}");
-                        connection.SendChatMessage($"Time Attack Dungeon ID: {TADSeasonData.Id}");
-                        connection.SendChatMessage($"Time Attack Dungeon StartTime: {TADSeasonData.StartDate}");
-                        connection.SendChatMessage($"Time Attack Dungeon EndTime: {TADSeasonData.EndDate}");
-                        connection.SendChatMessage($"Time Attack Dungeon is set to {seasonId}");
+                        connection.SendChatMessage($"Joint Firing Drill Type: {string.Join(", ", TADExcel.TimeAttackDungeonType)}");
+                        connection.SendChatMessage($"Joint Firing Drill ID: {TADSeasonData.Id}");
+                        connection.SendChatMessage($"Joint Firing Drill StartTime: {TADSeasonData.StartDate}");
+                        connection.SendChatMessage($"Joint Firing Drill is set to {seasonId}");
                         connection.Context.SaveChanges();
                     }
                     else
@@ -74,10 +72,9 @@ namespace Phrenapates.Commands
                             eliminateRaidSeason.OpenRaidBossGroup02,
                             eliminateRaidSeason.OpenRaidBossGroup03
                         ];
-                        connection.SendChatMessage($"All Eliminate Raid Boss: {string.Join(", ", raidBoss)}");
-                        connection.SendChatMessage($"Eliminate Raid ID: {eliminateRaidSeason.SeasonId}");
-                        connection.SendChatMessage($"Eliminate Raid StartTime: {eliminateRaidSeason.SeasonStartData}");
-                        connection.SendChatMessage($"Eliminate Raid EndTime: {eliminateRaidSeason.SeasonEndData}");
+                        connection.SendChatMessage($"All Grand Assault Boss: {string.Join(", ", raidBoss)}");
+                        connection.SendChatMessage($"Grand Assault ID: {eliminateRaidSeason.SeasonId}");
+                        connection.SendChatMessage($"Grand Assault StartTime: {eliminateRaidSeason.SeasonStartData}");
                         connection.SendChatMessage($"Grand Assault Raid is set to {seasonId}");
                         connection.Context.SaveChanges();
                     }
@@ -87,7 +84,11 @@ namespace Phrenapates.Commands
                     }
                     break;
                 case "arena":
-                    connection.SendChatMessage($"Arena command isn't implemented yet!");
+                    connection.SendChatMessage($"PVP command isn't implemented yet!");
+                    connection.Context.SaveChanges();
+                    break;
+                case "multifloorraid":
+                    connection.SendChatMessage($"Final Restriction command isn't implemented yet!");
                     connection.Context.SaveChanges();
                     break;
                 default:
