@@ -28,7 +28,10 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var gearExcelTable = excelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
             var targetCharacter = account.Characters.FirstOrDefault(x => x.ServerId == req.CharacterServerId);
 
-            var gearId = gearExcelTable.FirstOrDefault(x => x.CharacterId == targetCharacter.UniqueId).Id;
+            var gearId = gearExcelTable.FirstOrDefault(x => 
+                x.CharacterId == targetCharacter.UniqueId &&
+                x.Tier == 1
+            ).Id;
 
             var newGear = new GearDB()
             {
@@ -43,24 +46,37 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             account.AddGears(context, [newGear]);
             context.SaveChanges();
 
+            var gear = account.Gears.FirstOrDefault(x => x.UniqueId == gearId);
+
             return new CharacterGearUnlockResponse()
             {
-                GearDB = newGear,
+                GearDB = gear,
                 CharacterDB = targetCharacter,
             };
         }
 
         [ProtocolHandler(Protocol.CharacterGear_TierUp)]
         public ResponsePacket TierUpHandler(CharacterGearTierUpRequest req)
-        {   // doesnt work
-            var targetGear = context.Gears.FirstOrDefault(x => x.ServerId == req.GearServerId);
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
 
-            targetGear.Tier++;
+            var gearExcelTable = excelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
+            var targetGear = context.Gears.FirstOrDefault(x => x.ServerId == req.GearServerId);
+            var targetCharacter = context.Characters.FirstOrDefault(x => x.ServerId == targetGear.BoundCharacterServerId);
+            
+            var gearId = gearExcelTable.FirstOrDefault(x => 
+                x.CharacterId == targetCharacter.UniqueId &&
+                x.Tier == 2
+            ).Id;
+
+            targetGear.UniqueId = gearId;
+            targetGear.Tier = 2;
+
             context.SaveChanges();
 
             return new CharacterGearTierUpResponse()
             {
-                GearDB = targetGear,
+                GearDB = targetGear
             };
         }
     }
