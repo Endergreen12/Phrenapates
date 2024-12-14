@@ -35,12 +35,10 @@ namespace Plana.Utils
                 case "ue30":
                     starGrade = 5;
                     favorRank = 20;
-                    breakLimit = true;
                     break;
                 case "ue50":
                     starGrade = 5;
                     favorRank = 50;
-                    breakLimit = true;
                     break;
                 case "max":
                     starGrade = 5;
