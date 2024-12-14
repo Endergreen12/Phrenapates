@@ -45,8 +45,6 @@ namespace Plana.Utils
                     favorRank = 100;
                     breakLimit = true;
                     break;
-                default:
-                    return;
             }
 
             var allCharacters = characterExcel.Where(x =>
@@ -126,8 +124,6 @@ namespace Plana.Utils
                 case "max":
                     useEquipment = true;
                     break;
-                default:
-                    return;
             }
 
 
@@ -213,8 +209,6 @@ namespace Plana.Utils
                 case "max":
                     weaponLevel = 50;
                     break;
-                default:
-                    return;
             }
 
             if(weaponLevel == 1)
@@ -264,8 +258,6 @@ namespace Plana.Utils
                 case "max":
                     useGear = true;
                     break;
-                default:
-                    return;
             }
 
             if(!useGear)

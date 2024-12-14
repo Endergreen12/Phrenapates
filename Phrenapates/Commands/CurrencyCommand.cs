@@ -26,7 +26,7 @@ namespace Phrenapates.Commands
                 connection.Context.Entry(currencies).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
                 connection.Context.SaveChanges();
 
-                connection.SendChatMessage($"Set amount of {currencyType.ToString()} to {amount}!");
+                connection.SendChatMessage($"Set amount of {currencyType} to {amount}!");
             } else
             {
                 throw new ArgumentException("Invalid Target / Amount!");

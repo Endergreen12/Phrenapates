@@ -20,7 +20,7 @@ namespace Phrenapates.Commands
             var options = Options.ToLower();
             List<string> optionList = ["basic", "ue30", "ue50", "max"];
 
-            if (!optionList.Contains(options))
+            if (!optionList.Contains(options) && options.Length > 0)
             {
                 connection.SendChatMessage("Unknown options!");
                 connection.SendChatMessage("Usage: /inventory addall ue50");

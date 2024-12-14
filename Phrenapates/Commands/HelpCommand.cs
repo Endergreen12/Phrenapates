@@ -8,10 +8,10 @@ namespace Phrenapates.Commands
     [CommandHandler("help", "Show this help.", "/help [command]")]
     internal class HelpCommand : Command
     {
+        public HelpCommand(IrcConnection connection, string[] args, bool validate = true) : base(connection, args, validate) { }
+        
         [Argument(0, @"^[a-zA-Z]+$", "The command to display the help message", ArgumentFlags.IgnoreCase | ArgumentFlags.Optional)]
         public string Command { get; set; } = string.Empty;
-
-        public HelpCommand(IrcConnection connection, string[] args, bool validate = true) : base(connection, args, validate) { }
 
         public override void Execute()
         {   
