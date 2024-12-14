@@ -199,7 +199,8 @@ namespace Phrenapates.Managers
             }
             RaidLobbyInfoDB.PlayingRaidDB.RaidBossDBs = RaidDB.RaidBossDBs;
 
-            List<long> characterId = RaidService.CharacterParticipation(summary.Group01Summary);
+            // Disabled for now until futher update on assist character
+            /*List<long> characterId = RaidService.CharacterParticipation(summary.Group01Summary);
             if (RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds == null) RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds = new();
             
             if (RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds.ContainsKey(keyId))
@@ -211,9 +212,8 @@ namespace Phrenapates.Managers
             {
                 RaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds[keyId] = characterId;
                 RaidLobbyInfoDB.ParticipateCharacterServerIds = characterId;
-            }
+            }*/
 
-            //Console.WriteLine(JsonSerializer.Serialize(RaidLobbyInfoDB));
             if (RaidDB.RaidBossDBs.All(x => x.BossCurrentHP == 0)) return true;
             else return false;
         }
