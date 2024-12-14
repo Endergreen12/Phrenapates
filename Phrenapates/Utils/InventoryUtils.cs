@@ -43,7 +43,7 @@ namespace Plana.Utils
                     FavorRank = maxed ? favorLevelExcel.Count : 1,
                     IsNew = true,
                     IsLocked = true,
-                    PotentialStats = { { 1, 0 }, { 2, 0 }, { 3, 0 } },
+                    PotentialStats = maxed ? new Dictionary<int, int> { { 1, 25 }, { 2, 25 }, { 3, 25 } } : new Dictionary<int, int> { { 1, 0 }, { 2, 0 }, { 3, 0 } },
                     EquipmentServerIds = [0, 0, 0]
                 };
             }).ToList();
@@ -59,7 +59,7 @@ namespace Plana.Utils
                 updateCharacter.Level = maxed ? characterLevelExcel.Count : 1;
                 updateCharacter.Exp = 0;
                 updateCharacter.FavorRank = maxed ? favorLevelExcel.Count : 1;
-                updateCharacter.PotentialStats = new Dictionary<int, int> { { 1, 0 }, { 2, 0 }, { 3, 0 } };
+                updateCharacter.PotentialStats = maxed ? new Dictionary<int, int> { { 1, 25 }, { 2, 25 }, { 3, 25 } } : new Dictionary<int, int> { { 1, 0 }, { 2, 0 }, { 3, 0 } };
                 updateCharacter.EquipmentServerIds = [0, 0, 0];
                 connection.Context.Characters.Update(updateCharacter);
             }
@@ -381,7 +381,7 @@ namespace Plana.Utils
                 FavorRank = 100,
                 IsNew = true,
                 IsLocked = true,
-                PotentialStats = { { 1, 0 }, { 2, 0 }, { 3, 0 } },
+                PotentialStats = { { 1, 25 }, { 2, 25 }, { 3, 25 } },
                 EquipmentServerIds = [0, 0, 0]
             };
         }
