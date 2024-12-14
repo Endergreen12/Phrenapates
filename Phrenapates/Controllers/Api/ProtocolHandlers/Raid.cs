@@ -41,10 +41,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
-            var raidStageTable = excelTableService.GetTable<RaidStageExcelTable>().UnPack().DataList;
+            var raidStageExcel = excelTableService.GetTable<RaidStageExcelTable>().UnPack().DataList;
             var characterStatExcel = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
-            var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == req.RaidUniqueId);
-            var bossData = characterStatExcel.FirstOrDefault(x => x.CharacterId == currentRaidData.BossCharacterId.FirstOrDefault());
+            var currentRaidData = raidStageExcel.FirstOrDefault(x => x.Id == req.RaidUniqueId);
 
             account.ContentInfo.RaidDataInfo.CurrentRaidUniqueId = req.RaidUniqueId;
             account.ContentInfo.RaidDataInfo.CurrentDifficulty = req.Difficulty;
@@ -54,30 +53,21 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             
             var raidLobbyInfoDB = RaidManager.Instance.RaidLobbyInfoDB;
 
-            var bossHp = (raidLobbyInfoDB?.PlayingRaidDB?.RaidBossDBs != null && raidLobbyInfoDB.PlayingRaidDB.RaidBossDBs.Count > 0) ? raidLobbyInfoDB.PlayingRaidDB.RaidBossDBs.First().BossCurrentHP : bossData.MaxHP100;
-            var raid = RaidManager.Instance.CreateRaid(account.ContentInfo, account.ServerId, account.Nickname, account.Level, account.RepresentCharacterServerId, req.IsPractice, req.RaidUniqueId, bossHp);
-            var battle = RaidManager.Instance.CreateBattle(account.ServerId, account.Nickname, account.RepresentCharacterServerId, req.RaidUniqueId, bossHp);
-            AssistCharacterDB assistCharacter = new();
-            if (req.AssistUseInfo != null)
-            {
-                assistCharacter = new AssistCharacterDB()
-                {
-                    AccountId = req.AssistUseInfo.CharacterAccountId,
-                    AssistCharacterServerId = req.AssistUseInfo.CharacterDBId,
-                    SlotNumber = req.AssistUseInfo.SlotNumber,
-                    EchelonType = req.AssistUseInfo.EchelonType,
-                    AssistRelation = req.AssistUseInfo.AssistRelation,
-                    IsMulligan = req.AssistUseInfo.IsMulligan,
-                    IsTSAInteraction = req.AssistUseInfo.IsTSAInteraction,
-                    
-                };
-            }
+            var raid = RaidManager.Instance.CreateRaid(
+                account.ContentInfo,
+                account.ServerId, account.Nickname, account.Level, account.RepresentCharacterServerId,
+                req.IsPractice, req.RaidUniqueId,
+                currentRaidData, characterStatExcel
+            );
+            var battle = RaidManager.Instance.CreateBattle(
+                account.ServerId, account.Nickname, account.RepresentCharacterServerId,
+                req.RaidUniqueId, characterStatExcel.FirstOrDefault(x => x.CharacterId == raidStageExcel.FirstOrDefault(y => y.Id == req.RaidUniqueId).BossCharacterId.FirstOrDefault()).MaxHP100
+            );
 
             return new RaidCreateBattleResponse()
             {
                 RaidDB = raid,
                 RaidBattleDB = battle,
-                AssistCharacterDB = assistCharacter,
                 ServerTimeTicks = RaidManager.Instance.GetServerTime().Ticks
             };
         }
@@ -87,26 +77,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var raid = RaidManager.Instance.RaidDB;
             var battle = RaidManager.Instance.RaidBattleDB;
-            AssistCharacterDB assistCharacter = new() {};
-            if (req.AssistUseInfo != null)
-            {
-                assistCharacter = new AssistCharacterDB()
-                {
-                    AccountId = req.AssistUseInfo.CharacterAccountId,
-                    AssistCharacterServerId = req.AssistUseInfo.CharacterDBId,
-                    SlotNumber = req.AssistUseInfo.SlotNumber,
-                    EchelonType = req.AssistUseInfo.EchelonType,
-                    AssistRelation = req.AssistUseInfo.AssistRelation,
-                    IsMulligan = req.AssistUseInfo.IsMulligan,
-                    IsTSAInteraction = req.AssistUseInfo.IsTSAInteraction
-                };
-            }
 
             return new RaidEnterBattleResponse()
             {
                 RaidDB = raid,
                 RaidBattleDB = battle,
-                AssistCharacterDB = assistCharacter,
                 ServerTimeTicks = RaidManager.Instance.GetServerTime().Ticks
             };
         }
@@ -117,20 +92,13 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
             var raidStageTable = excelTableService.GetTable<RaidStageExcelTable>().UnPack().DataList;
-            var raidExcelTable = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
+            var characterStatExcelTable = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
             var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.ContentInfo.RaidDataInfo.CurrentRaidUniqueId);
-            var bossData = raidExcelTable.FirstOrDefault(x => x.CharacterId == currentRaidData.BossCharacterId.FirstOrDefault());
 
-            var raidLobbyInfoDB = RaidManager.Instance.RaidLobbyInfoDB;
-            var bossResult = req.Summary.RaidSummary.RaidBossResults.FirstOrDefault();
-            var previousBattleHP =  (raidLobbyInfoDB?.PlayingRaidDB?.RaidBossDBs != null && raidLobbyInfoDB.PlayingRaidDB.RaidBossDBs.Count > 0) ? raidLobbyInfoDB.PlayingRaidDB.RaidBossDBs.First().BossCurrentHP : bossData.MaxHP100;
-            var totalHpLeft = previousBattleHP - bossResult.RaidDamage.GivenDamage;
+            bool isCleared = RaidManager.Instance.SaveBattle(account.ServerId, req.Summary);
 
-            if (totalHpLeft > 0)
+            if (!isCleared)
             {
-                List<long> characterId = req.Summary.Group01Summary.Heroes.Select(x => x.ServerId).ToList()
-                    .Concat(req.Summary.Group01Summary.Supporters.Select(x => x.ServerId)).ToList();
-                RaidManager.Instance.SaveBattle(account.ServerId, characterId, totalHpLeft, bossResult.RaidDamage.GivenGroggyPoint, bossResult.RaidDamage.Index);
                 account.ContentInfo.RaidDataInfo.TimeBonus += req.Summary.EndFrame;
                 return new RaidEndBattleResponse()
                 {
@@ -138,7 +106,9 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 };
             }
 
-            var totalTime = req.Summary.EndFrame/30f;
+            var bossResult = req.Summary.RaidSummary.RaidBossResults.FirstOrDefault();
+
+            var totalTime = (req.Summary.EndFrame + account.ContentInfo.RaidDataInfo.TimeBonus)/30f;
             var timeScore = RaidService.CalculateTimeScore(totalTime, account.ContentInfo.RaidDataInfo.CurrentDifficulty);
             var hpPercentScorePoint = currentRaidData.HPPercentScore;
             var defaultClearPoint = currentRaidData.DefaultClearScore;
@@ -150,13 +120,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             account.ContentInfo.RaidDataInfo.TimeBonus = 0;
             context.Entry(account).Property(x => x.ContentInfo).IsModified = true; // force update
             context.SaveChanges();
-
-            var battle = RaidManager.Instance.RaidBattleDB;
-
-            battle.CurrentBossHP = bossResult.EndHpRateRawValue;
-            battle.CurrentBossGroggy = bossResult.GroggyRateRawValue;
-            battle.CurrentBossAIPhase = bossResult.AIPhase;
-            battle.SubPartsHPs = bossResult.SubPartsHPs;
 
             RaidManager.Instance.ClearPlayingBossDB();
 

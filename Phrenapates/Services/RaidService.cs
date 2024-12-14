@@ -1,4 +1,6 @@
 using Plana.FlatData;
+using Plana.MX.Logic.Battles.Summary;
+using Plana.MX.Logic.Data;
 
 namespace Phrenapates.Services
 {
@@ -10,5 +12,21 @@ namespace Phrenapates.Services
             
             return (long)((3600f - duration) * multipliers[(int)difficulty]);
         }
+        public static List<long> CharacterParticipation(GroupSummary Group01Summary)
+        {
+            return Group01Summary.Heroes.Select(x => x.ServerId).ToList()
+            .Concat(Group01Summary.Supporters.Select(x => x.ServerId)).ToList();
+        }
+
+        public static RaidDamage CreateRaidDamage(RaidDamage raidDmg)
+        {
+            return new RaidDamage()
+            {
+                Index = raidDmg.Index,
+                GivenDamage = raidDmg.GivenDamage,
+                GivenGroggyPoint = raidDmg.GivenGroggyPoint
+            };
+        }
     }
+
 }

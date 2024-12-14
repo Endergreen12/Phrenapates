@@ -1,7 +1,9 @@
-﻿using Plana.MX.GameLogic.DBModel;
-using Plana.FlatData;
-using Plana.Database;
+﻿using Phrenapates.Services;
 using Phrenapates.Utils;
+using Plana.Database;
+using Plana.FlatData;
+using Plana.MX.GameLogic.DBModel;
+using Plana.MX.Logic.Battles.Summary;
 
 namespace Phrenapates.Managers
 {
@@ -71,10 +73,22 @@ namespace Phrenapates.Managers
         public RaidDB CreateRaid(
             ContentInfo raidInfo,
             long ownerId, string ownerNickname, int ownerLevel, long characterId,
-            bool isPractice, long raidId, long currentHp)
+            bool isPractice, long raidId,
+            EliminateRaidStageExcelT currentRaidData, List<CharacterStatExcelT> characterStatExcel
+        )
         {
             if (RaidDB == null)
             {
+                List<RaidBossDB> raidBossDBs = currentRaidData.BossCharacterId.Select((x, index) => {
+                    return new RaidBossDB()
+                    {
+                        ContentType = ContentType.Raid,
+                        BossCurrentHP = characterStatExcel.FirstOrDefault(y => y.CharacterId == x).MaxHP100,
+                        BossGroggyPoint = 0,
+                        BossIndex = index
+                    };
+                }).ToList();
+                
                 RaidDB = new()
                 {
                     Owner = new()
@@ -94,19 +108,13 @@ namespace Phrenapates.Managers
                     PlayerCount = 1,
                     IsPractice = isPractice,
                     AccountLevelWhenCreateDB = ownerLevel,
-                    RaidBossDBs = [
-                        new RaidBossDB()
-                        {
-                            ContentType = ContentType.EliminateRaid,
-                            BossCurrentHP = currentHp,
-                        }
-                    ],
+                    RaidBossDBs = raidBossDBs
                 };
             }
 
             else
             {
-                RaidDB.BossDifficulty = raidInfo.RaidDataInfo.CurrentDifficulty;
+                RaidDB.BossDifficulty = raidInfo.EliminateRaidDataInfo.CurrentDifficulty;
                 RaidDB.UniqueId = raidId;
                 RaidDB.IsPractice = isPractice;
             }
@@ -146,18 +154,56 @@ namespace Phrenapates.Managers
             return RaidBattleDB;
         }
 
-        public EliminateRaidLobbyInfoDB SaveBattle(long keyId, List<long> characterId, long currentBossHP, long groggyPoint, int bossIndex)
+        public bool SaveBattle(long keyId, BattleSummary summary)
         {
-            var RaidBossDB = new RaidBossDB()
+            RaidBattleDB.RaidMembers.FirstOrDefault().DamageCollection = new();
+            foreach(var raidDamage in summary.RaidSummary.RaidBossResults)
             {
-                ContentType = ContentType.EliminateRaid,
-                BossCurrentHP = currentBossHP,
-                BossGroggyPoint = groggyPoint,
-                BossIndex = bossIndex
-            };
-            RaidDB.RaidBossDBs.Clear();
-            RaidDB.RaidBossDBs.Add(RaidBossDB);
+                RaidBattleDB.RaidMembers.FirstOrDefault().DamageCollection.Add(
+                    RaidService.CreateRaidDamage(raidDamage.RaidDamage)
+                );
+            }
+
+            foreach(var bossResult in summary.RaidSummary.RaidBossResults)
+            {
+                long hpLeft = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP - bossResult.RaidDamage.GivenDamage;
+                if(hpLeft <= 0)
+                {
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = default;
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = bossResult.RaidDamage.GivenGroggyPoint;
+                    
+                    int nextBossIndex = bossResult.RaidDamage.Index + 1;
+                    if (nextBossIndex < RaidDB.RaidBossDBs.Count)
+                    {
+                        RaidBattleDB.CurrentBossHP = RaidDB.RaidBossDBs[nextBossIndex].BossCurrentHP;
+                        RaidBattleDB.CurrentBossGroggy = 0;
+                        RaidBattleDB.CurrentBossAIPhase = -1;
+                        RaidBattleDB.SubPartsHPs = new();
+                        RaidBattleDB.RaidBossIndex = nextBossIndex;
+                    }
+                    else
+                    {
+                        RaidBattleDB.CurrentBossHP = 0;
+                        RaidBattleDB.CurrentBossGroggy = bossResult.GroggyRateRawValue;
+                        RaidBattleDB.CurrentBossAIPhase = bossResult.AIPhase;
+                        RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
+                    }
+                    continue;
+                }
+                else
+                {
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = hpLeft;
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint += bossResult.RaidDamage.GivenGroggyPoint;
+
+                    RaidBattleDB.CurrentBossHP = hpLeft;
+                    RaidBattleDB.CurrentBossGroggy = bossResult.GroggyRateRawValue;
+                    RaidBattleDB.CurrentBossAIPhase = bossResult.AIPhase;
+                    RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
+                }
+            }
             EliminateRaidLobbyInfoDB.PlayingRaidDB.RaidBossDBs = RaidDB.RaidBossDBs;
+
+            List<long> characterId = RaidService.CharacterParticipation(summary.Group01Summary);
             if (EliminateRaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds == null) EliminateRaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds = new();
             
             if (EliminateRaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds.ContainsKey(keyId))
@@ -170,7 +216,10 @@ namespace Phrenapates.Managers
                 EliminateRaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds[keyId] = characterId;
                 EliminateRaidLobbyInfoDB.ParticipateCharacterServerIds = characterId;
             }
-            return EliminateRaidLobbyInfoDB;
+
+            //Console.WriteLine(JsonSerializer.Serialize(RaidLobbyInfoDB));
+            if (RaidDB.RaidBossDBs.All(x => x.BossCurrentHP == 0)) return true;
+            else return false;
         }
 
         public void ClearPlayingBossDB()
