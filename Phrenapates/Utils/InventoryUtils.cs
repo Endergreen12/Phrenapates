@@ -5,7 +5,7 @@ using Phrenapates.Services.Irc;
 using System.Data;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Plana.Utils
+namespace Phrenapates.Utils
 {
     public static class InventoryUtils
     {
@@ -448,27 +448,6 @@ namespace Plana.Utils
             };
             connection.Context.SaveChanges();
             connection.SendChatMessage("Removed all furnitures!");
-        }
-
-        public static CharacterDB CreateMaxCharacterFromId(uint characterId)
-        {
-            return new CharacterDB()
-            {
-                UniqueId = characterId,
-                StarGrade = 5,
-                Level = 90,
-                Exp = 0,
-                PublicSkillLevel = 10,
-                ExSkillLevel = 5,
-                PassiveSkillLevel = 10,
-                ExtraPassiveSkillLevel = 10,
-                LeaderSkillLevel = 1,
-                FavorRank = 100,
-                IsNew = true,
-                IsLocked = true,
-                PotentialStats = { { 1, 25 }, { 2, 25 }, { 3, 25 } },
-                EquipmentServerIds = [0, 0, 0]
-            };
         }
     }
 }

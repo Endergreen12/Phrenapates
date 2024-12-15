@@ -1,4 +1,4 @@
-﻿using Plana.Utils;
+﻿using Phrenapates.Utils;
 using Phrenapates.Services.Irc;
 
 namespace Phrenapates.Commands
