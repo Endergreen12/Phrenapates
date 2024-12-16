@@ -80,30 +80,58 @@ namespace Phrenapates.Utils
                 EquipmentServerIds = [0, 0, 0]
             };
 
-            connection.Account.AddCharacters(connection.Context, [characterDB]);
-            connection.Context.SaveChanges();
+            if(connection.Account.Characters.Any(x => x.UniqueId == characterId))
+            {
+                var character = connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterId);
+                character.StarGrade = useOptions ? starGrade : characterExcel.FirstOrDefault(x => x.Id == characterId).DefaultStarGrade;
+                character.Level = useOptions ? characterLevelExcel.Count : 1;
+                character.Exp = 0;
+                character.ExSkillLevel = useOptions ? 5 : 1;
+                character.PublicSkillLevel = useOptions ? 10 : 1;
+                character.PassiveSkillLevel = useOptions ? 10 : 1;
+                character.ExtraPassiveSkillLevel = useOptions ? 10 : 1;
+                character.LeaderSkillLevel = 1;
+                character.FavorRank = useOptions ? favorRank : 1;
+                character.IsNew = true;
+                character.IsLocked = true;
+                character.PotentialStats = breakLimit ? 
+                    new Dictionary<int, int> { { 1, 25 }, { 2, 25 }, { 3, 25 } } :
+                    new Dictionary<int, int> { { 1, 0 }, { 2, 0 }, { 3, 0 } };
+                connection.Context.SaveChanges();
+            }
+            else
+            {
+                connection.Account.AddCharacters(connection.Context, [characterDB]);
+                connection.Context.SaveChanges();
+            }
+
             
             //Weapon
             if(useOptions && weaponLevel != 1)
             {
                 var weaponOwner = connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterId);
-                var weapon = new WeaponDB()
+                if(weaponOwner != null)
                 {
-                    UniqueId = weaponOwner.UniqueId,
-                    BoundCharacterServerId = weaponOwner.ServerId,
-                    IsLocked = false,
-                    StarGrade = weaponExcel.FirstOrDefault(y => y.Id == weaponOwner.UniqueId).Unlock.TakeWhile(y => y).Count(),
-                    Level = weaponLevel
-                };
-                connection.Account.AddWeapons(connection.Context, [weapon]);
-                connection.Context.SaveChanges();
+                    var weapon = new WeaponDB()
+                    {
+                        UniqueId = weaponOwner.UniqueId,
+                        BoundCharacterServerId = weaponOwner.ServerId,
+                        IsLocked = false,
+                        StarGrade = weaponExcel.FirstOrDefault(y => y.Id == weaponOwner.UniqueId).Unlock.TakeWhile(y => y).Count(),
+                        Level = weaponLevel
+                    };
+                    connection.Account.AddWeapons(connection.Context, [weapon]);
+                    connection.Context.SaveChanges();
+                }
             }
 
             //Equipment
             if(useOptions && useEquipment)
             {
                 var characterEquipmentData = characterExcel.FirstOrDefault(x => x.Id == characterId);
-                var characterEquipment = characterEquipmentData.EquipmentSlot.Select(x =>
+                if (characterEquipmentData != null)
+                {
+                    var characterEquipment = characterEquipmentData.EquipmentSlot.Select(x =>
                     {
                         var equipmentData = equipmentExcel.FirstOrDefault(
                             y => y.EquipmentCategory == x && y.MaxLevel == 65
@@ -117,11 +145,12 @@ namespace Phrenapates.Utils
                             BoundCharacterServerId = connection.Account.Characters.FirstOrDefault(y => y.UniqueId == characterEquipmentData.Id).ServerId
                         };                
                     }).ToList();
-                connection.Account.AddEquipment(connection.Context, [.. characterEquipment]);
-                connection.Context.SaveChanges();    
-                connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterEquipmentData.Id).EquipmentServerIds.Clear();
-                connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterEquipmentData.Id).EquipmentServerIds.AddRange(characterEquipment.Select(x => x.ServerId));
-                connection.Context.SaveChanges();
+                    connection.Account.AddEquipment(connection.Context, [.. characterEquipment]);
+                    connection.Context.SaveChanges();    
+                    connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterEquipmentData.Id).EquipmentServerIds.Clear();
+                    connection.Account.Characters.FirstOrDefault(x => x.UniqueId == characterEquipmentData.Id).EquipmentServerIds.AddRange(characterEquipment.Select(x => x.ServerId));
+                    connection.Context.SaveChanges();
+                }
             }
 
             // Unique Gear
