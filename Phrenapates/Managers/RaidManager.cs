@@ -180,7 +180,7 @@ namespace Phrenapates.Managers
                         // Move to the next boss
                         RaidBattleDB.CurrentBossHP = RaidDB.RaidBossDBs[nextBossIndex].BossCurrentHP;
                         RaidBattleDB.CurrentBossGroggy = 0;
-                        RaidBattleDB.CurrentBossAIPhase = -1;
+                        RaidBattleDB.CurrentBossAIPhase = 0;
                         RaidBattleDB.SubPartsHPs = new();
                         RaidBattleDB.RaidBossIndex = nextBossIndex;
                     }
