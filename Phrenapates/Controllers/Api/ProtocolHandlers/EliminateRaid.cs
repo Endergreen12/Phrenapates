@@ -97,10 +97,10 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
             var raidStageTable = excelTableService.GetTable<EliminateRaidStageExcelTable>().UnPack().DataList;
-            var raidExcelTable = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
-            var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.ContentInfo.EliminateRaidDataInfo.CurrentRaidUniqueId);
+            var characterStatExcelTable = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
+            var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.ContentInfo.RaidDataInfo.CurrentRaidUniqueId);
 
-            bool isCleared = EliminateRaidManager.Instance.SaveBattle(account.ServerId, req.Summary);
+            bool isCleared = EliminateRaidManager.Instance.SaveBattle(account.ServerId, req.Summary, characterStatExcelTable);
 
             if (!isCleared)
             {

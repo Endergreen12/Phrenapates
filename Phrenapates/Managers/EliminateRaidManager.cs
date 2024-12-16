@@ -12,8 +12,11 @@ namespace Phrenapates.Managers
         public EliminateRaidLobbyInfoDB EliminateRaidLobbyInfoDB { get; private set; }
         public RaidDB RaidDB { get; private set; }
         public RaidBattleDB RaidBattleDB { get; private set; }
+
+        // Track boss data and time.
         public long SeasonId { get; private set; }
         public DateTime OverrideServerTimeTicks { get; private set; }
+        public List<long> BossCharacterIds { get; private set; }
 
         public DateTime CreateServerTime(EliminateRaidSeasonManageExcelT targetSeason, ContentInfo contentInfo)
         {
@@ -154,7 +157,7 @@ namespace Phrenapates.Managers
             return RaidBattleDB;
         }
 
-        public bool SaveBattle(long keyId, BattleSummary summary)
+        public bool SaveBattle(long keyId, BattleSummary summary, List<CharacterStatExcelT> characterStatExcels)
         {
             RaidBattleDB.RaidMembers.FirstOrDefault().DamageCollection = new();
             foreach(var raidDamage in summary.RaidSummary.RaidBossResults)
@@ -169,12 +172,14 @@ namespace Phrenapates.Managers
                 long hpLeft = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP - bossResult.RaidDamage.GivenDamage;
                 if(hpLeft <= 0)
                 {
+                    // Boss defeated
                     RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = default;
-                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = bossResult.RaidDamage.GivenGroggyPoint;
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = 0;
                     
                     int nextBossIndex = bossResult.RaidDamage.Index + 1;
                     if (nextBossIndex < RaidDB.RaidBossDBs.Count)
                     {
+                        // Move to the next boss
                         RaidBattleDB.CurrentBossHP = RaidDB.RaidBossDBs[nextBossIndex].BossCurrentHP;
                         RaidBattleDB.CurrentBossGroggy = 0;
                         RaidBattleDB.CurrentBossAIPhase = -1;
@@ -183,27 +188,31 @@ namespace Phrenapates.Managers
                     }
                     else
                     {
+                        // No more bosses, raid is complete
                         RaidBattleDB.CurrentBossHP = 0;
                         RaidBattleDB.CurrentBossGroggy = bossResult.GroggyRateRawValue;
                         RaidBattleDB.CurrentBossAIPhase = bossResult.AIPhase;
                         RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                     }
-                    continue;
                 }
                 else
                 {
+                    // Boss not defeated, update current boss state
+                    var characterStat = characterStatExcels.FirstOrDefault(x => x.CharacterId == BossCharacterIds[bossResult.RaidDamage.Index]);
+                    var groggyPoint = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint + bossResult.RaidDamage.GivenGroggyPoint;
+                    groggyPoint = RaidService.CalculateGroggyAccumulation(groggyPoint, characterStat);
                     RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = hpLeft;
-                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint += bossResult.RaidDamage.GivenGroggyPoint;
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = groggyPoint;
 
                     RaidBattleDB.CurrentBossHP = hpLeft;
-                    RaidBattleDB.CurrentBossGroggy = bossResult.GroggyRateRawValue;
+                    RaidBattleDB.CurrentBossGroggy = groggyPoint;
                     RaidBattleDB.CurrentBossAIPhase = bossResult.AIPhase;
                     RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                 }
             }
             EliminateRaidLobbyInfoDB.PlayingRaidDB.RaidBossDBs = RaidDB.RaidBossDBs;
 
-            // Disabled for now until futher update on assist character
+            // Disabled for now until futher update on assistant character
             /*List<long> characterId = RaidService.CharacterParticipation(summary.Group01Summary);
             if (EliminateRaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds == null) EliminateRaidLobbyInfoDB.PlayingRaidDB.ParticipateCharacterServerIds = new();
             
