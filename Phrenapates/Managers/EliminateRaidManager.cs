@@ -91,6 +91,8 @@ namespace Phrenapates.Managers
                         BossIndex = index
                     };
                 }).ToList();
+
+                BossCharacterIds ??= currentRaidData.BossCharacterId;
                 
                 RaidDB = new()
                 {
@@ -236,6 +238,7 @@ namespace Phrenapates.Managers
             RaidDB = null;
             EliminateRaidLobbyInfoDB = null;
             RaidBattleDB = null;
+            BossCharacterIds = null;
         }
     }
 }
