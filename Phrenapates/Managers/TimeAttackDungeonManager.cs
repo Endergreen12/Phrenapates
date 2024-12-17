@@ -12,6 +12,8 @@ namespace Phrenapates.Managers
     {
         public Dictionary<long, TimeAttackDungeonRoomDB> TimeAttackDungeonRooms { get; private set; }
         public List<TimeAttackDungeonBattleHistoryDB> TimeAttackDungeonBattleHistoryDBs { get; private set; } = [];
+        
+        // Track boss data and time.
         public long SeasonId { get; private set; }
         public DateTime OverrideServerTimeTicks { get; private set; }
         
@@ -20,6 +22,7 @@ namespace Phrenapates.Managers
             if (OverrideServerTimeTicks == null || SeasonId != contentInfo.TimeAttackDungeonDataInfo.SeasonId)
             {
                 OverrideServerTimeTicks = DateTime.Parse(targetSeason.StartDate);
+                SeasonId = contentInfo.TimeAttackDungeonDataInfo.SeasonId;
             }
             return OverrideServerTimeTicks;
         }
@@ -30,7 +33,12 @@ namespace Phrenapates.Managers
 
         public TimeAttackDungeonRoomDB GetPreviousRoom()
         {
-            if (TimeAttackDungeonBattleHistoryDBs.Count == 3) return TimeAttackDungeonRooms[1];
+            if (TimeAttackDungeonBattleHistoryDBs.Count == 3)
+            {
+                TimeAttackDungeonBattleHistoryDBs = [];
+                TimeAttackDungeonRooms[1].RewardDate = OverrideServerTimeTicks;
+                return TimeAttackDungeonRooms[1];
+            }
             else return null;
         }
 
@@ -69,8 +77,8 @@ namespace Phrenapates.Managers
                         DefaultPoint = TADgeasData.ClearDefaultPoint,
                         ClearTimePoint = TimeAttackDungeonService.CalculateTimeScore(battleSummary.EndFrame/30f, TADgeasData),
                         EndFrame = battleSummary.EndFrame,
-                        MainCharacterDBs = TimeAttackDungeonService.ConvertHeroSummaryToCollection(battleSummary.Group01Summary.Heroes),
-                        SupportCharacterDBs = TimeAttackDungeonService.ConvertHeroSummaryToCollection(battleSummary.Group01Summary.Supporters)
+                        MainCharacterDBs = [], //TimeAttackDungeonService.ConvertHeroSummaryToCollection(battleSummary.Group01Summary.Heroes),
+                        SupportCharacterDBs = [] //TimeAttackDungeonService.ConvertHeroSummaryToCollection(battleSummary.Group01Summary.Supporters)
                     }
                 ];
             }
@@ -85,26 +93,20 @@ namespace Phrenapates.Managers
                         DefaultPoint = TADgeasData.ClearDefaultPoint,
                         ClearTimePoint = TimeAttackDungeonService.CalculateTimeScore(battleSummary.EndFrame/30f, TADgeasData),
                         EndFrame = battleSummary.EndFrame,
-                        MainCharacterDBs = TimeAttackDungeonService.ConvertHeroSummaryToCollection(battleSummary.Group01Summary.Heroes),
-                        SupportCharacterDBs = TimeAttackDungeonService.ConvertHeroSummaryToCollection(battleSummary.Group01Summary.Supporters)
+                        MainCharacterDBs = [], //TimeAttackDungeonService.ConvertHeroSummaryToCollection(battleSummary.Group01Summary.Heroes),
+                        SupportCharacterDBs = [] //TimeAttackDungeonService.ConvertHeroSummaryToCollection(battleSummary.Group01Summary.Supporters)
                     }
                 );
             }
 
             TimeAttackDungeonRooms[1].BattleHistoryDBs = TimeAttackDungeonBattleHistoryDBs;
-            if (TimeAttackDungeonBattleHistoryDBs.Count == 3)
-            {
-                TimeAttackDungeonBattleHistoryDBs = new List<TimeAttackDungeonBattleHistoryDB>();
-                TimeAttackDungeonRooms[1].RewardDate = DateTime.Now;
-            }
-
             return TimeAttackDungeonRooms[1];
         }
 
         public TimeAttackDungeonRoomDB GiveUp()
         {
             var tempData = TimeAttackDungeonRooms[1];
-            tempData.RewardDate = DateTime.Now;
+            tempData.RewardDate = OverrideServerTimeTicks;
             TimeAttackDungeonRooms = null;
             TimeAttackDungeonBattleHistoryDBs = new List<TimeAttackDungeonBattleHistoryDB>();
 

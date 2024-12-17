@@ -48,9 +48,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 ServerTimeTicks = TimeAttackDungeonManager.Instance.CreateServerTime(targetSeason, account.ContentInfo).Ticks
             };
 
-            if (currentRoom != null) packet.RoomDBs = currentRoom;
             if (previousRoom != null) packet.PreviousRoomDB = previousRoom;
-
+            if (currentRoom != null) packet.RoomDBs = currentRoom;
 
             return packet;
         }
@@ -86,17 +85,20 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var TADGeasExcel = excelTableService.GetTable<TimeAttackDungeonGeasExcelTable>().UnPack().DataList;
             var TADGeasData = TADGeasExcel.FirstOrDefault(x => x.Id == req.Summary.StageId);
 
-            var packet = new TimeAttackDungeonEndBattleResponse();
+            var packet = new TimeAttackDungeonEndBattleResponse()
+            {
+                ServerTimeTicks = TimeAttackDungeonManager.Instance.GetServerTime().Ticks
+            };
             if(req.Summary.EndType != BattleEndType.Clear) 
             {
                 packet.RoomDB = TimeAttackDungeonManager.Instance.GetRoom();
+                
                 return packet;
             }
 
             var dungeonResult = TimeAttackDungeonManager.Instance.BattleResult(req.Summary, TADGeasData);
             var timePoint = TimeAttackDungeonService.CalculateTimeScore(req.Summary.EndFrame/30, TADGeasData);
             var totalpoint = TADGeasData.ClearDefaultPoint + timePoint;
-
 
             var seasonBestRecord = TADInfo.SeasonBestRecord;
             var totalAllPoint = TimeAttackDungeonService.CalculateScoreRecord(
@@ -116,6 +118,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 TotalPoint = totalpoint,
                 DefaultPoint = TADGeasData.ClearDefaultPoint,
                 TimePoint = timePoint,
+                RoomDB = dungeonResult,
                 ServerTimeTicks = TimeAttackDungeonManager.Instance.GetServerTime().Ticks
             };
         }

@@ -28,7 +28,6 @@ namespace Phrenapates.Managers
             return OverrideServerTimeTicks;
         }
         public DateTime GetServerTime() => OverrideServerTimeTicks;
-        public bool TimeScoreReset(ContentInfo contentInfo) => SeasonId != contentInfo.EliminateRaidDataInfo.SeasonId;
 
         public EliminateRaidLobbyInfoDB GetLobby(ContentInfo raidInfo, EliminateRaidSeasonManageExcelT targetSeasonData)
         {

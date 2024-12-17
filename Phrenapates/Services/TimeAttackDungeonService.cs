@@ -12,7 +12,7 @@ namespace Phrenapates.Services
             long timeWeightConst = taDungeonData.TimeWeightConst / 10000;
             
             // Formula: ROUNDDOWN(ClearTimeWeightPoint * (1 - PlayerClearTime / ((BattleDuration / 1000) + ((TimeWeightConst / 10000) * PlayerClearTime))))
-            return (long)Math.Floor(taDungeonData.ClearTimeWeightPoint * 1 - (duration / (totalBattleDuration + (timeWeightConst * duration))));
+            return (long)Math.Floor(taDungeonData.ClearTimeWeightPoint * (1 - duration / (totalBattleDuration + (timeWeightConst * duration))));
         }
 
         public static List<TimeAttackDungeonCharacterDB> ConvertHeroSummaryToCollection(HeroSummaryCollection heroSummary)
