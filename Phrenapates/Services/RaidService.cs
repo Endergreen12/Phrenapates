@@ -30,7 +30,8 @@ namespace Phrenapates.Services
 
         public static long CalculateGroggyAccumulation(long groggyPointTotal, CharacterStatExcelT characterStat)
         {
-            long groggyPoint = groggyPointTotal % characterStat.GroggyGauge;
+            long groggyPoint = groggyPointTotal;
+            if(characterStat.GroggyGauge != 0) groggyPoint = groggyPointTotal % characterStat.GroggyGauge;
 
             return groggyPoint;
         }

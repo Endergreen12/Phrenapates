@@ -121,7 +121,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             context.Entry(account).Property(x => x.ContentInfo).IsModified = true; // force update
             context.SaveChanges();
 
-            RaidManager.Instance.ClearPlayingBossDB();
+            RaidManager.Instance.ClearBossData();
 
             return new RaidEndBattleResponse()
             {
@@ -146,7 +146,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 BestRankingPoint = account.ContentInfo.RaidDataInfo.BestRankingPoint
             };
 
-            RaidManager.Instance.ClearPlayingBossDB();
+            RaidManager.Instance.ClearBossData();
 
             return new RaidGiveUpResponse()
             {

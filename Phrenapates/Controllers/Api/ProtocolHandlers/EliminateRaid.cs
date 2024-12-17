@@ -98,7 +98,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 
             var raidStageTable = excelTableService.GetTable<EliminateRaidStageExcelTable>().UnPack().DataList;
             var characterStatExcelTable = excelTableService.GetTable<CharacterStatExcelTable>().UnPack().DataList;
-            var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.ContentInfo.RaidDataInfo.CurrentRaidUniqueId);
+            var currentRaidData = raidStageTable.FirstOrDefault(x => x.Id == account.ContentInfo.EliminateRaidDataInfo.CurrentRaidUniqueId);
 
             bool isCleared = EliminateRaidManager.Instance.SaveBattle(account.ServerId, req.Summary, characterStatExcelTable);
 
@@ -133,7 +133,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             battle.CurrentBossAIPhase = bossResult.AIPhase;
             battle.SubPartsHPs = bossResult.SubPartsHPs;
 
-            EliminateRaidManager.Instance.ClearPlayingBossDB();
+            EliminateRaidManager.Instance.ClearBossData();
 
             return new EliminateRaidEndBattleResponse()
             {
@@ -169,7 +169,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 BestRankingPoint = account.ContentInfo.EliminateRaidDataInfo.BestRankingPoint
             };
 
-            EliminateRaidManager.Instance.ClearPlayingBossDB();
+            EliminateRaidManager.Instance.ClearBossData();
 
             return new EliminateRaidGiveUpResponse()
             {
