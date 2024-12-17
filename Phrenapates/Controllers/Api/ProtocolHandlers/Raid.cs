@@ -20,6 +20,12 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             excelTableService = _excelTableService;
         }
 
+        [ProtocolHandler(Protocol.Raid_Login)]
+        public ResponsePacket RaidLoginHandler(RaidLoginRequest req)
+        {
+            return new RaidLoginResponse();
+        }
+
         [ProtocolHandler(Protocol.Raid_Lobby)]
         public ResponsePacket LobbyHandler(RaidLobbyRequest req)
         {
@@ -28,10 +34,19 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var raidSeasonExcel = excelTableService.GetTable<RaidSeasonManageExcelTable>().UnPack().DataList;
             var targetSeason = raidSeasonExcel.FirstOrDefault(x => x.SeasonId == account.ContentInfo.RaidDataInfo.SeasonId);
             long serverTimeTicks = RaidManager.Instance.CreateServerTime(targetSeason, account.ContentInfo).Ticks;
+            var raidLobbyInfoDB = RaidManager.Instance.GetLobby(account.ContentInfo, targetSeason);
+
+            if(RaidManager.Instance.TimeScoreReset(account.ContentInfo))
+            {
+                account.ContentInfo.RaidDataInfo.TimeBonus = 0;
+                context.Entry(account).Property(x => x.ContentInfo).IsModified = true;
+                context.SaveChanges();
+            }
+
             return new RaidLobbyResponse()
             {
                 SeasonType = RaidSeasonType.Open,
-                RaidLobbyInfoDB = RaidManager.Instance.GetLobby(account.ContentInfo, targetSeason),
+                RaidLobbyInfoDB = raidLobbyInfoDB,
                 ServerTimeTicks = serverTimeTicks
             };
         }

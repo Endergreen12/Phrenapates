@@ -23,11 +23,13 @@ namespace Phrenapates.Managers
             if (OverrideServerTimeTicks == null || SeasonId != contentInfo.RaidDataInfo.SeasonId)
             {
                 OverrideServerTimeTicks = DateTime.Parse(targetSeason.SeasonStartData);
+                SeasonId = contentInfo.RaidDataInfo.SeasonId;
             }
             return OverrideServerTimeTicks;
         }
 
         public DateTime GetServerTime() => OverrideServerTimeTicks;
+        public bool TimeScoreReset(ContentInfo contentInfo) => SeasonId != contentInfo.RaidDataInfo.SeasonId;
 
         public SingleRaidLobbyInfoDB GetLobby(ContentInfo raidInfo, RaidSeasonManageExcelT targetSeasonData)
         {

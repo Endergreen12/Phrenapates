@@ -33,11 +33,19 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var raidSeasonExcel = excelTableService.GetTable<EliminateRaidSeasonManageExcelTable>().UnPack().DataList;
             var targetSeason = raidSeasonExcel.FirstOrDefault(x => x.SeasonId == account.ContentInfo.EliminateRaidDataInfo.SeasonId);
             var serverTimeTicks = EliminateRaidManager.Instance.CreateServerTime(targetSeason, account.ContentInfo).Ticks;
+            var eliminateRaidLobbyInfoDB = EliminateRaidManager.Instance.GetLobby(account.ContentInfo, targetSeason);
 
+            if(EliminateRaidManager.Instance.TimeScoreReset(account.ContentInfo))
+            {
+                account.ContentInfo.EliminateRaidDataInfo.TimeBonus = 0;
+                context.Entry(account).Property(x => x.ContentInfo).IsModified = true; // force update
+                context.SaveChanges();
+            }
+            
             return new EliminateRaidLobbyResponse()
             {
                 SeasonType = RaidSeasonType.Open,
-                RaidLobbyInfoDB = EliminateRaidManager.Instance.GetLobby(account.ContentInfo, targetSeason),
+                RaidLobbyInfoDB = eliminateRaidLobbyInfoDB,
                 ServerTimeTicks = serverTimeTicks
             };
         }
