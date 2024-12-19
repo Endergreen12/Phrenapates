@@ -197,7 +197,7 @@ namespace Phrenapates.Managers
                         // No more bosses, raid is complete
                         //Console.WriteLine("Raid complete");
                         RaidBattleDB.CurrentBossHP = 0;
-                        RaidBattleDB.CurrentBossGroggy = bossResult.GroggyRateRawValue;
+                        RaidBattleDB.CurrentBossGroggy = groggyPoint;
                         RaidBattleDB.CurrentBossAIPhase = bossResult.AIPhase;
                         RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                     }
@@ -211,7 +211,7 @@ namespace Phrenapates.Managers
 
                     RaidBattleDB.CurrentBossHP = hpLeft;
                     RaidBattleDB.CurrentBossGroggy = groggyPoint;
-                    RaidBattleDB.CurrentBossAIPhase = bossResult.AIPhase;
+                    RaidBattleDB.CurrentBossAIPhase = 0;
                     RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                 }
             }
