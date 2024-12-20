@@ -223,7 +223,7 @@ namespace Phrenapates.Managers
 
                     RaidBattleDB.CurrentBossHP = hpLeft;
                     RaidBattleDB.CurrentBossGroggy = groggyPoint;
-                    RaidBattleDB.CurrentBossAIPhase = bossResult.RaidDamage.Index;
+                    RaidBattleDB.CurrentBossAIPhase = 1;
                     RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                 }
             }
