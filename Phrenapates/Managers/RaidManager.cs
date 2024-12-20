@@ -156,7 +156,10 @@ namespace Phrenapates.Managers
             return RaidBattleDB;
         }
 
-        public bool SaveBattle(long keyId, BattleSummary summary, List<CharacterStatExcelT> characterStatExcels)
+        public bool SaveBattle(
+            long keyId, BattleSummary summary,
+            RaidStageExcelT raidStageExcel, List<CharacterStatExcelT> characterStatExcels
+        )
         {
             RaidBattleDB.RaidMembers.FirstOrDefault().DamageCollection = new();
             foreach(var raidDamage in summary.RaidSummary.RaidBossResults)
@@ -166,36 +169,42 @@ namespace Phrenapates.Managers
                 );
             }
 
-            foreach(var bossResult in summary.RaidSummary.RaidBossResults)
+            foreach (var bossResult in summary.RaidSummary.RaidBossResults)
             {
-                var characterStat = characterStatExcels.FirstOrDefault(x => x.CharacterId == BossCharacterIds[bossResult.RaidDamage.Index]);
-                
-                long hpLeft = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP - bossResult.RaidDamage.GivenDamage;
-                long groggyPoint = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint + bossResult.RaidDamage.GivenGroggyPoint;
-                groggyPoint = RaidService.CalculateGroggyAccumulation(groggyPoint, characterStat);
-                
-                if(hpLeft <= 0)
+                var bossIndex = bossResult.RaidDamage.Index;
+                var raidBoss = RaidDB.RaidBossDBs[bossIndex];
+                var characterStat = characterStatExcels.FirstOrDefault(x => x.CharacterId == BossCharacterIds[bossIndex]);
+
+                // Calculate updated HP and Groggy points
+                long hpLeft = raidBoss.BossCurrentHP - bossResult.RaidDamage.GivenDamage;
+                long groggyPoint = RaidService.CalculateGroggyAccumulation(
+                    raidBoss.BossGroggyPoint + bossResult.RaidDamage.GivenGroggyPoint, 
+                    characterStat
+                );
+
+                if (hpLeft <= 0)
                 {
                     // Boss defeated
-                    //Console.WriteLine("Boss defeated");
-                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = default;
-                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = groggyPoint;
-                    
-                    int nextBossIndex = bossResult.RaidDamage.Index + 1;
+                    Console.WriteLine("Boss defeated");
+                    raidBoss.BossCurrentHP = default;
+                    raidBoss.BossGroggyPoint = groggyPoint;
+
+                    int nextBossIndex = bossIndex + 1;
                     if (nextBossIndex < RaidDB.RaidBossDBs.Count)
                     {
                         // Move to the next boss
-                        //Console.WriteLine("Move to the next boss");
-                        RaidBattleDB.CurrentBossHP = RaidDB.RaidBossDBs[nextBossIndex].BossCurrentHP;
+                        Console.WriteLine("Move to the next boss");
+                        var nextBoss = RaidDB.RaidBossDBs[nextBossIndex];
+                        RaidBattleDB.CurrentBossHP = nextBoss.BossCurrentHP;
                         RaidBattleDB.CurrentBossGroggy = 0;
-                        RaidBattleDB.CurrentBossAIPhase = 0;
-                        RaidBattleDB.SubPartsHPs = new();
+                        RaidBattleDB.CurrentBossAIPhase = 1;
+                        RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                         RaidBattleDB.RaidBossIndex = nextBossIndex;
                     }
                     else
                     {
-                        // No more bosses, raid is complete
-                        //Console.WriteLine("Raid complete");
+                        // Raid complete
+                        Console.WriteLine("Raid complete");
                         RaidBattleDB.CurrentBossHP = 0;
                         RaidBattleDB.CurrentBossGroggy = groggyPoint;
                         RaidBattleDB.CurrentBossAIPhase = bossResult.AIPhase;
@@ -204,14 +213,14 @@ namespace Phrenapates.Managers
                 }
                 else
                 {
-                    // Boss not defeated, update current boss state
-                    //Console.WriteLine("Boss not defeated");
-                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = hpLeft;
-                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = groggyPoint;
+                    // Boss not defeated
+                    Console.WriteLine("Boss not defeated");
+                    raidBoss.BossCurrentHP = hpLeft;
+                    raidBoss.BossGroggyPoint = groggyPoint;
 
                     RaidBattleDB.CurrentBossHP = hpLeft;
                     RaidBattleDB.CurrentBossGroggy = groggyPoint;
-                    RaidBattleDB.CurrentBossAIPhase = 0;
+                    RaidBattleDB.CurrentBossAIPhase = 1;
                     RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                 }
             }
