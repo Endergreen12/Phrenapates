@@ -171,14 +171,12 @@ namespace Phrenapates.Managers
 
             foreach (var bossResult in summary.RaidSummary.RaidBossResults)
             {
-                var bossIndex = bossResult.RaidDamage.Index;
-                var raidBoss = RaidDB.RaidBossDBs[bossIndex];
-                var characterStat = characterStatExcels.FirstOrDefault(x => x.CharacterId == BossCharacterIds[bossIndex]);
+                var characterStat = characterStatExcels.FirstOrDefault(x => x.CharacterId == BossCharacterIds[bossResult.RaidDamage.Index]);
 
                 // Calculate updated HP and Groggy points
-                long hpLeft = raidBoss.BossCurrentHP - bossResult.RaidDamage.GivenDamage;
+                long hpLeft = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP - bossResult.RaidDamage.GivenDamage;
                 long groggyPoint = RaidService.CalculateGroggyAccumulation(
-                    raidBoss.BossGroggyPoint + bossResult.RaidDamage.GivenGroggyPoint, 
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint + bossResult.RaidDamage.GivenGroggyPoint, 
                     characterStat
                 );
 
@@ -186,10 +184,10 @@ namespace Phrenapates.Managers
                 {
                     // Boss defeated
                     Console.WriteLine("Boss defeated");
-                    raidBoss.BossCurrentHP = default;
-                    raidBoss.BossGroggyPoint = groggyPoint;
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = default;
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = groggyPoint;
 
-                    int nextBossIndex = bossIndex + 1;
+                    int nextBossIndex = bossResult.RaidDamage.Index + 1;
                     if (nextBossIndex < RaidDB.RaidBossDBs.Count)
                     {
                         // Move to the next boss
@@ -215,8 +213,8 @@ namespace Phrenapates.Managers
                 {
                     // Boss not defeated
                     Console.WriteLine("Boss not defeated");
-                    raidBoss.BossCurrentHP = hpLeft;
-                    raidBoss.BossGroggyPoint = groggyPoint;
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = hpLeft;
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = groggyPoint;
 
                     RaidBattleDB.CurrentBossHP = hpLeft;
                     RaidBattleDB.CurrentBossGroggy = groggyPoint;
