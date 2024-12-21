@@ -43,59 +43,57 @@ namespace Phrenapates.Services
         )
         {
             var characterStat = characterStatExcels.FirstOrDefault(x => x.CharacterId == raidStageExcel.BossCharacterId[bossIndex]);
-            if(raidStageExcel.GroundDevName == "Binah")
+            var bossName = raidStageExcel.GroundDevName;
+            var maxHp = characterStat?.MaxHP100 ?? 0;
+
+            // Special case for HOD which continues from previous phase
+            if (bossName == "HOD") return previousPhase;
+
+            // Handle bosses that change phase based on bossIndex
+            var indexBasedPhases = new Dictionary<string, (int targetIndex, int phaseValue)>
             {
-                // Skips for now
-                //*if(bossHp <= characterStat.MaxHP100 * )
-                return 0;
-            }
-            else if(raidStageExcel.GroundDevName == "Chesed")
+                { "ShiroKuro", (1, 7) },
+                { "Kaitenger", (1, 1) },
+                { "HoverCraft", (1, 4) }
+            };
+
+            if (indexBasedPhases.TryGetValue(bossName, out var indexPhase) && bossIndex == indexPhase.targetIndex)
             {
-                // HP Threshold Checks
-                if(bossHp < characterStat.MaxHP100) return 1;
-                else return 0;
+                return indexPhase.phaseValue;
             }
-            else if(raidStageExcel.GroundDevName == "ShiroKuro")
+
+            // Handle bosses with HP threshold based phases
+            var hpThresholds = new Dictionary<string, (float threshold, int phase)[]>
             {
-                // Boss Index Checks
-                if(bossIndex == 1) return 7;
-                else return 0;
-            }
-            else if(raidStageExcel.GroundDevName == "Hieronymus")
+                { "Chesed", new[] { (1f, 1) } },
+                { "Hieronymus", new[] { (0.5f, 1) } },
+                { "Goz", new[] { (1f, 1), (0.6f, 2) } },
+                { "EN0006", new[] { (0.75f, 1), (0.1f, 2) } }
+            };
+
+            if (hpThresholds.TryGetValue(bossName, out var thresholds))
             {
-                // HP Threshold Checks
-                if(bossHp <= (characterStat.MaxHP100 * 0.5)) return 1;
-                else return 0;
+                foreach (var (threshold, phase) in thresholds.OrderBy(t => t.threshold))
+                {
+                    if (bossHp <= maxHp * threshold) return phase;
+                }
+                return bossName == "Goz" ? 1 : 0; // Special case for Goz's default phase
             }
-            else if(raidStageExcel.GroundDevName == "Kaitenger")
+
+            // Special case for Binah with difficulty-based thresholds
+            if (bossName == "Binah")
             {
-                // Boss Index Checks
-                if(bossIndex == 1) return 1;
-                else return 0;
+                var difficultyIndex = (int)raidStageExcel.Difficulty;
+                var secondPhase = new[] { 2f/3, 5f/8, 7f/11, 12f/20, 3.5f/6, 4f/7, 13.2f/23 };
+                var thirdPhase = new[] { 1f/3, 2f/8, 3f/11, 4f/20, 1f/6, 1.5f/7, 4.9f/23 };
+
+                if (bossHp <= maxHp * secondPhase[difficultyIndex]) return 1;
+                if (bossHp <= maxHp * thirdPhase[difficultyIndex]) return 2;
             }
-            // Perorozilla has no checks
-            else if(raidStageExcel.GroundDevName == "HOD") return previousPhase; //Continues from previous phase
-            else if(raidStageExcel.GroundDevName == "Goz")
-            {
-                // HP Threshold Checks (Weird phase default)
-                if(bossHp <= (characterStat.MaxHP100 * 0.6)) return 2;
-                else return 1;
-            }
-            // Gregorius (EN0005) has no checks
-            else if(raidStageExcel.GroundDevName == "HoverCraft")
-            {
-                // Boss Index Checks
-                if(bossIndex == 1) return 4;
-                else return 0;
-            }
-            else if(raidStageExcel.GroundDevName == "EN0006") // Kurokage
-            {
-                // HP Threshold Checks
-                if(bossHp <= (characterStat.MaxHP100 * 0.1)) return 2;
-                else if(bossHp <= (characterStat.MaxHP100 * 0.75)) return 1;
-                else return 0;
-            }
-            else return 0;
+
+            // Perorozilla and Gregorius use default phase
+
+            return 0; // Default phase
         }
     }
 
