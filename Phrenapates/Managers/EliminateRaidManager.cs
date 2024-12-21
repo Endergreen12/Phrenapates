@@ -1,4 +1,6 @@
-﻿using Phrenapates.Services;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
+using Phrenapates.Services;
 using Phrenapates.Utils;
 using Plana.Database;
 using Plana.FlatData;
@@ -94,6 +96,8 @@ namespace Phrenapates.Managers
                     };
                 }).ToList();
 
+                Console.WriteLine($"Create RaidDB: {JsonSerializer.Serialize(raidBossDBs, new JsonSerializerOptions() { WriteIndented = true })}");
+
                 BossCharacterIds ??= currentRaidData.BossCharacterId;
                 
                 RaidDB = new()
@@ -166,68 +170,85 @@ namespace Phrenapates.Managers
             EliminateRaidStageExcelT raidStageExcel, List<CharacterStatExcelT> characterStatExcels
         )
         {
-            RaidBattleDB.RaidMembers.FirstOrDefault().DamageCollection = new();
-            foreach(var raidDamage in summary.RaidSummary.RaidBossResults)
+            RaidBattleDB.RaidMembers.FirstOrDefault().DamageCollection ??= [];
+            var raidMember = RaidBattleDB.RaidMembers.FirstOrDefault();
+            foreach (var raidDamage in summary.RaidSummary.RaidBossResults)
             {
-                RaidBattleDB.RaidMembers.FirstOrDefault().DamageCollection.Add(
-                    RaidService.CreateRaidDamage(raidDamage.RaidDamage)
-                );
+                var existingDamageCol = raidMember.DamageCollection.FirstOrDefault(x => x.Index == raidDamage.RaidDamage.Index);
+
+                if (existingDamageCol != null)
+                {
+                    existingDamageCol.GivenDamage += raidDamage.RaidDamage.GivenDamage;
+                    existingDamageCol.GivenGroggyPoint += raidDamage.RaidDamage.GivenGroggyPoint;
+                }
+                else raidMember.DamageCollection.Add(RaidService.CreateRaidCollection(raidDamage.RaidDamage));
             }
+
 
             foreach (var bossResult in summary.RaidSummary.RaidBossResults)
             {
                 var characterStat = characterStatExcels.FirstOrDefault(x => x.CharacterId == BossCharacterIds[bossResult.RaidDamage.Index]);
 
+                Console.WriteLine($"-------------------------- Boss {bossResult.RaidDamage.Index} ----------------------------");
+                Console.WriteLine($"Boss {bossResult.RaidDamage.Index} Total HP: {RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP}");
                 // Calculate updated HP and Groggy points
                 long hpLeft = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP - bossResult.RaidDamage.GivenDamage;
-                long groggyPoint = RaidService.CalculateGroggyAccumulation(
-                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint + bossResult.RaidDamage.GivenGroggyPoint, 
-                    characterStat
-                );
+                long givenGroggy = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint + bossResult.RaidDamage.GivenGroggyPoint;
+                long groggyPoint = RaidService.CalculateGroggyAccumulation(givenGroggy, characterStat);
+                Console.WriteLine($"Boss {bossResult.RaidDamage.Index} HP: {RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP} - {bossResult.RaidDamage.GivenDamage} = {hpLeft}");
+                Console.WriteLine($"Boss {bossResult.RaidDamage.Index} Groggy: {givenGroggy} % {characterStat.GroggyGauge} = {groggyPoint} [{characterStat.GroggyGauge != 0}]");
+                Console.WriteLine($"Boss {bossResult.RaidDamage.Index} AIPhase: {bossResult.AIPhase}");
 
                 if (hpLeft <= 0)
                 {
                     // Boss defeated
-                    Console.WriteLine("Boss defeated");
-                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = default;
+                    Console.WriteLine($"Boss {bossResult.RaidDamage.Index}: Boss defeated");
+                    RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = 0;
                     RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = groggyPoint;
 
                     int nextBossIndex = bossResult.RaidDamage.Index + 1;
                     if (nextBossIndex < RaidDB.RaidBossDBs.Count)
                     {
                         // Move to the next boss
-                        Console.WriteLine("Move to the next boss");
+                        Console.WriteLine($"Boss {bossResult.RaidDamage.Index}: Move to the next boss");
                         var nextBoss = RaidDB.RaidBossDBs[nextBossIndex];
                         RaidBattleDB.CurrentBossHP = nextBoss.BossCurrentHP;
                         RaidBattleDB.CurrentBossGroggy = 0;
                         RaidBattleDB.CurrentBossAIPhase = 1;
                         RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                         RaidBattleDB.RaidBossIndex = nextBossIndex;
+                        Console.WriteLine($"Boss {bossResult.RaidDamage.Index} AIPhase: Set to {RaidBattleDB.CurrentBossAIPhase}");
                     }
                     else
                     {
                         // Raid complete
-                        Console.WriteLine("Raid complete");
+                        Console.WriteLine($"Boss {bossResult.RaidDamage.Index}: Raid complete");
                         RaidBattleDB.CurrentBossHP = 0;
                         RaidBattleDB.CurrentBossGroggy = groggyPoint;
                         RaidBattleDB.CurrentBossAIPhase = bossResult.AIPhase;
                         RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
+                        Console.WriteLine($"------------------------ Raid Ended ----------------------------");
                     }
                 }
                 else
                 {
                     // Boss not defeated
-                    Console.WriteLine("Boss not defeated");
+                    Console.WriteLine($"Boss {bossResult.RaidDamage.Index}: Boss not defeated");
                     RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP = hpLeft;
                     RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = groggyPoint;
 
                     RaidBattleDB.CurrentBossHP = hpLeft;
                     RaidBattleDB.CurrentBossGroggy = groggyPoint;
-                    RaidBattleDB.CurrentBossAIPhase = 1;
+                    RaidBattleDB.CurrentBossAIPhase = 0;
+                    Console.WriteLine($"Boss {bossResult.RaidDamage.Index} AIPhase : reseted to {RaidBattleDB.CurrentBossAIPhase}");
                     RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                 }
             }
             EliminateRaidLobbyInfoDB.PlayingRaidDB.RaidBossDBs = RaidDB.RaidBossDBs;
+            Console.WriteLine($"--------------------- End Calculation --------------------------");
+            Console.WriteLine($"Sum All HP Raid: {RaidDB.RaidBossDBs.Sum(x => x.BossCurrentHP)}");
+            Console.WriteLine($"RaidDB Boss Data: {JsonSerializer.Serialize(RaidDB.RaidBossDBs, new JsonSerializerOptions() { WriteIndented = true })}");
+            Console.WriteLine($"RaidBattleDB Data: {JsonSerializer.Serialize(RaidBattleDB, new JsonSerializerOptions() { WriteIndented = true })}");
 
             // Disabled for now until futher update on assistant character
             /*List<long> characterId = RaidService.CharacterParticipation(summary.Group01Summary);

@@ -165,7 +165,7 @@ namespace Phrenapates.Managers
             foreach(var raidDamage in summary.RaidSummary.RaidBossResults)
             {
                 RaidBattleDB.RaidMembers.FirstOrDefault().DamageCollection.Add(
-                    RaidService.CreateRaidDamage(raidDamage.RaidDamage)
+                    RaidService.CreateRaidCollection(raidDamage.RaidDamage)
                 );
             }
 
