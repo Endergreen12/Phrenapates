@@ -211,13 +211,13 @@ namespace Phrenapates.Managers
                     RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = groggyPoint;
 
                     int nextBossIndex = bossResult.RaidDamage.Index + 1;
-                    long nextBossAIPhase = RaidService.AIPhaseChecks(
-                        nextBossIndex, hpLeft, bossResult.AIPhase,
-                        raidStageExcel, characterStatExcels
-                    );
                     if (nextBossIndex < RaidDB.RaidBossDBs.Count)
                     {
                         // Move to the next boss
+                        long nextBossAIPhase = RaidService.AIPhaseChecks(
+                            nextBossIndex, hpLeft, bossResult.AIPhase,
+                            raidStageExcel, characterStatExcels
+                        );
                         Console.WriteLine($"Boss {bossResult.RaidDamage.Index}: Move to the next boss");
                         var nextBoss = RaidDB.RaidBossDBs[nextBossIndex];
                         RaidBattleDB.CurrentBossHP = nextBoss.BossCurrentHP;
