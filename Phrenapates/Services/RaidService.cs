@@ -75,7 +75,7 @@ namespace Phrenapates.Services
             {
                 foreach (var (threshold, phase) in thresholds.OrderBy(t => t.threshold))
                 {
-                    if (bossHp <= maxHp * threshold) return phase;
+                    if (bossHp <= (maxHp * threshold)) return phase;
                 }
             }
 
@@ -86,8 +86,8 @@ namespace Phrenapates.Services
                 var secondPhase = new[] { 2f/3, 5f/8, 7f/11, 12f/20, 3.5f/6, 4f/7, 13.2f/23 };
                 var thirdPhase = new[] { 1f/3, 2f/8, 3f/11, 4f/20, 1f/6, 1.5f/7, 4.9f/23 };
 
-                if (bossHp <= maxHp * secondPhase[difficultyIndex]) return 1;
-                if (bossHp <= maxHp * thirdPhase[difficultyIndex]) return 2;
+                if (bossHp <= (maxHp * thirdPhase[difficultyIndex])) return 2;
+                else if (bossHp <= (maxHp * secondPhase[difficultyIndex])) return 1;
             }
 
             // Perorozilla and Gregorius use default phase
