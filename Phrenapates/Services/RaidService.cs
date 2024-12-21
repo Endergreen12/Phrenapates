@@ -36,6 +36,67 @@ namespace Phrenapates.Services
                 GivenGroggyPoint = raidDmg.GivenGroggyPoint
             };
         }
+
+        public static long AIPhaseChecks(
+            int bossIndex, long bossHp, long previousPhase,
+            EliminateRaidStageExcelT raidStageExcel, List<CharacterStatExcelT> characterStatExcels    
+        )
+        {
+            var characterStat = characterStatExcels.FirstOrDefault(x => x.CharacterId == raidStageExcel.BossCharacterId[bossIndex]);
+            if(raidStageExcel.GroundDevName == "Binah")
+            {
+                // Skips for now
+                //*if(bossHp <= characterStat.MaxHP100 * )
+                return 0;
+            }
+            else if(raidStageExcel.GroundDevName == "Chesed")
+            {
+                // HP Threshold Checks
+                if(bossHp < characterStat.MaxHP100) return 1;
+                else return 0;
+            }
+            else if(raidStageExcel.GroundDevName == "ShiroKuro")
+            {
+                // Boss Index Checks
+                if(bossIndex == 1) return 7;
+                else return 0;
+            }
+            else if(raidStageExcel.GroundDevName == "Hieronymus")
+            {
+                // HP Threshold Checks
+                if(bossHp <= (characterStat.MaxHP100 * 0.5)) return 1;
+                else return 0;
+            }
+            else if(raidStageExcel.GroundDevName == "Kaitenger")
+            {
+                // Boss Index Checks
+                if(bossIndex == 1) return 1;
+                else return 0;
+            }
+            // Perorozilla has no checks
+            else if(raidStageExcel.GroundDevName == "HOD") return previousPhase; //Continues from previous phase
+            else if(raidStageExcel.GroundDevName == "Goz")
+            {
+                // HP Threshold Checks (Weird phase default)
+                if(bossHp <= (characterStat.MaxHP100 * 0.6)) return 2;
+                else return 1;
+            }
+            // Gregorius (EN0005) has no checks
+            else if(raidStageExcel.GroundDevName == "HoverCraft")
+            {
+                // Boss Index Checks
+                if(bossIndex == 1) return 4;
+                else return 0;
+            }
+            else if(raidStageExcel.GroundDevName == "EN0006") // Kurokage
+            {
+                // HP Threshold Checks
+                if(bossHp <= (characterStat.MaxHP100 * 0.1)) return 2;
+                else if(bossHp <= (characterStat.MaxHP100 * 0.75)) return 1;
+                else return 0;
+            }
+            else return 0;
+        }
     }
 
 }

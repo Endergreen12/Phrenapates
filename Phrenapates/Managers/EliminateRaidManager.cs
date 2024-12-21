@@ -195,6 +195,10 @@ namespace Phrenapates.Managers
                 long hpLeft = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP - bossResult.RaidDamage.GivenDamage;
                 long givenGroggy = RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint + bossResult.RaidDamage.GivenGroggyPoint;
                 long groggyPoint = RaidService.CalculateGroggyAccumulation(givenGroggy, characterStat);
+                long bossAIPhase = RaidService.AIPhaseChecks(
+                    bossResult.RaidDamage.Index, hpLeft, bossResult.AIPhase,
+                    raidStageExcel, characterStatExcels
+                );
                 Console.WriteLine($"Boss {bossResult.RaidDamage.Index} HP: {RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossCurrentHP} - {bossResult.RaidDamage.GivenDamage} = {hpLeft}");
                 Console.WriteLine($"Boss {bossResult.RaidDamage.Index} Groggy: {givenGroggy} % {characterStat.GroggyGauge} = {groggyPoint} [{characterStat.GroggyGauge != 0}]");
                 Console.WriteLine($"Boss {bossResult.RaidDamage.Index} AIPhase: {bossResult.AIPhase}");
@@ -207,6 +211,10 @@ namespace Phrenapates.Managers
                     RaidDB.RaidBossDBs[bossResult.RaidDamage.Index].BossGroggyPoint = groggyPoint;
 
                     int nextBossIndex = bossResult.RaidDamage.Index + 1;
+                    long nextBossAIPhase = RaidService.AIPhaseChecks(
+                        nextBossIndex, hpLeft, bossResult.AIPhase,
+                        raidStageExcel, characterStatExcels
+                    );
                     if (nextBossIndex < RaidDB.RaidBossDBs.Count)
                     {
                         // Move to the next boss
@@ -214,10 +222,10 @@ namespace Phrenapates.Managers
                         var nextBoss = RaidDB.RaidBossDBs[nextBossIndex];
                         RaidBattleDB.CurrentBossHP = nextBoss.BossCurrentHP;
                         RaidBattleDB.CurrentBossGroggy = 0;
-                        RaidBattleDB.CurrentBossAIPhase = 1;
+                        RaidBattleDB.CurrentBossAIPhase = nextBossAIPhase;
                         RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
                         RaidBattleDB.RaidBossIndex = nextBossIndex;
-                        Console.WriteLine($"Boss {bossResult.RaidDamage.Index} AIPhase: Set to {RaidBattleDB.CurrentBossAIPhase}");
+                        Console.WriteLine($"Boss {bossResult.RaidDamage.Index} AIPhase set to {RaidBattleDB.CurrentBossAIPhase}");
                     }
                     else
                     {
@@ -239,9 +247,9 @@ namespace Phrenapates.Managers
 
                     RaidBattleDB.CurrentBossHP = hpLeft;
                     RaidBattleDB.CurrentBossGroggy = groggyPoint;
-                    RaidBattleDB.CurrentBossAIPhase = 0;
-                    Console.WriteLine($"Boss {bossResult.RaidDamage.Index} AIPhase : reseted to {RaidBattleDB.CurrentBossAIPhase}");
+                    RaidBattleDB.CurrentBossAIPhase = bossAIPhase;
                     RaidBattleDB.SubPartsHPs = bossResult.SubPartsHPs;
+                    Console.WriteLine($"Boss {bossResult.RaidDamage.Index} AIPhase reseted to {RaidBattleDB.CurrentBossAIPhase}");
                 }
             }
             EliminateRaidLobbyInfoDB.PlayingRaidDB.RaidBossDBs = RaidDB.RaidBossDBs;
