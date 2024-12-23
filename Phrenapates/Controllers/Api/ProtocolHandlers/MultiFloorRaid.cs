@@ -3,6 +3,8 @@ using Plana.Database;
 using Plana.MX.GameLogic.DBModel;
 using Plana.MX.NetworkProtocol;
 using Plana.MX.Logic.Battles;
+using Phrenapates.Managers;
+using Plana.FlatData;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {
@@ -22,11 +24,19 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         [ProtocolHandler(Protocol.MultiFloorRaid_Sync)]
         public ResponsePacket SyncHandler(MultiFloorRaidSyncRequest req)
         {
-            var raidList = sessionKeyService.GetAccount(req.SessionKey).MultiFloorRaids.ToList();
-            
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var raidList = account.MultiFloorRaids.ToList();
+
             return new MultiFloorRaidSyncResponse()
             {
-                MultiFloorRaidDBs = raidList.Count == 0 ? new List<MultiFloorRaidDB>() { new() { SeasonId = (long)req.SeasonId } } : raidList,
+                MultiFloorRaidDBs = raidList.Count == 0 ?
+                [new()
+                    {
+                        SeasonId = account.ContentInfo.MultiFloorRaidDataInfo.SeasonId,
+                        ClearedDifficulty = 124,
+                        RewardDifficulty = 124 
+                    }
+                ] : raidList
             };
         }
 
@@ -43,7 +53,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket EndBattleHandler(MultiFloorRaidEndBattleRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
-            MultiFloorRaidDB db = new() { SeasonId = req.SeasonId };
+            var multiFloorRaidData = account.ContentInfo.MultiFloorRaidDataInfo;
+            MultiFloorRaidDB db = new() { SeasonId = multiFloorRaidData.SeasonId };
 
             if (!req.Summary.IsAbort && req.Summary.EndType == BattleEndType.Clear)
             {
@@ -56,10 +67,10 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                     account.MultiFloorRaids.Add(db);
                 }
 
-                db.SeasonId = req.SeasonId;
-                db.ClearedDifficulty = req.Difficulty;
+                db.SeasonId = db.SeasonId != multiFloorRaidData.SeasonId ? multiFloorRaidData.SeasonId : db.SeasonId;
+                db.ClearedDifficulty = 124;
                 db.LastClearDate = DateTime.Now;
-                db.RewardDifficulty = req.Difficulty;
+                db.RewardDifficulty = 124;
                 db.LastRewardDate = DateTime.Now;
                 db.ClearBattleFrame = req.Summary.EndFrame;
                 db.AllCleared = false;

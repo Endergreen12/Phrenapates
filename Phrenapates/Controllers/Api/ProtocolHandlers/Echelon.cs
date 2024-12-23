@@ -1,6 +1,8 @@
-﻿using Phrenapates.Services;
+﻿using Phrenapates.Managers;
+using Phrenapates.Services;
 using Plana.Database;
 using Plana.Database.ModelExtensions;
+using Plana.FlatData;
 using Plana.MX.NetworkProtocol;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
@@ -23,7 +25,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
-            return new EchelonListResponse() { EchelonDBs = [.. account.Echelons], ArenaEchelonDB = new() };
+            return new EchelonListResponse()
+            {
+                EchelonDBs = [.. account.Echelons],
+                ArenaEchelonDB = new()
+            };
         }
 
         [ProtocolHandler(Protocol.Echelon_Save)]

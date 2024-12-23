@@ -9,11 +9,108 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
     public class Arena(
         IProtocolHandlerFactory protocolHandlerFactory,
         ISessionKeyService _sessionKeyService,
-        SCHALEContext _context
+        SCHALEContext _context,
+        ExcelTableService _excelTableService
     ) : ProtocolHandlerBase(protocolHandlerFactory)
     {
         private readonly ISessionKeyService sessionKeyService = _sessionKeyService;
         private readonly SCHALEContext context = _context;
+        private readonly ExcelTableService excelTableService = _excelTableService;
+
+        [ProtocolHandler(Protocol.Arena_EnterLobby)]
+        public ResponsePacket EnterLobbyHandler(ArenaEnterLobbyRequest req)
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+            var arenaSeason = excelTableService.GetTable<ArenaSeasonExcelTable>().UnPack().DataList
+            .FirstOrDefault(x => x.UniqueId == account.ContentInfo.ArenaDataInfo.SeasonId);
+
+            return new ArenaEnterLobbyResponse()
+            {
+                ArenaPlayerInfoDB = new()
+                {
+                    CurrentSeasonId = account.ContentInfo.ArenaDataInfo.SeasonId,
+                    PlayerGroupId = 1,
+                    CurrentRank = 1,
+                    SeasonRecord = 1,
+                    AllTimeRecord = 1
+                },
+                OpponentUserDBs = ArenaService.DummyOpponent(GetDefense(req.AccountId)),
+                MapId = 1001
+            };
+        }
+
+        [ProtocolHandler(Protocol.Arena_OpponentList)]
+        public ResponsePacket OpponentListHandler(ArenaOpponentListRequest req)
+        {
+            return new ArenaOpponentListResponse()
+            {
+                PlayerRank = 1,
+                OpponentUserDBs = ArenaService.DummyOpponent(GetDefense(req.AccountId)),
+            };
+        }
+
+        [ProtocolHandler(Protocol.Arena_SyncEchelonSettingTime)]
+        public ResponsePacket SyncEchelonSettingTimeHandler(ArenaSyncEchelonSettingTimeRequest req)
+        {
+            return new ArenaSyncEchelonSettingTimeResponse()
+            {
+                EchelonSettingTime = DateTime.Now
+            };
+        }
+
+        [ProtocolHandler(Protocol.Arena_EnterBattlePart1)]
+        public ResponsePacket EnterBattlePart1Handler(ArenaEnterBattlePart1Request req)
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+
+            var attack = context.Echelons.OrderBy(e => e.ServerId).Last(e =>
+                e.AccountServerId == req.AccountId
+                && e.EchelonType == EchelonType.ArenaAttack
+                && e.EchelonNumber == 1
+                && e.ExtensionType == EchelonExtensionType.Base
+            );
+
+            ArenaUserDB arenaUserDB = new()
+            {
+                RepresentCharacterUniqueId = 10059,
+                NickName = "You",
+                Rank = 1,
+                Level = 90,
+                TeamSettingDB = Convert(attack)
+            };
+            return new ArenaEnterBattlePart1Response()
+            {
+                ArenaBattleDB = new()
+                {
+                    Season = account.ContentInfo.ArenaDataInfo.SeasonId,
+                    Group = 1,
+                    BattleStartTime = DateTime.Now,
+                    Seed = DateTime.Now.Ticks,
+                    AttackingUserDB = arenaUserDB,
+                    DefendingUserDB = ArenaService.DummyOpponent(GetDefense(req.AccountId))[0]
+                },
+            };
+        }
+
+        [ProtocolHandler(Protocol.Arena_EnterBattlePart2)]
+        public ResponsePacket EnterBattlePart2Handler(ArenaEnterBattlePart2Request req)
+        {
+            var account = sessionKeyService.GetAccount(req.SessionKey);
+
+            return new ArenaEnterBattlePart2Response()
+            {
+                ArenaBattleDB = req.ArenaBattleDB,
+                ArenaPlayerInfoDB = new ArenaPlayerInfoDB()
+                {
+                    CurrentSeasonId = account.ContentInfo.ArenaDataInfo.SeasonId,
+                    PlayerGroupId = 1,
+                    CurrentRank = 1,
+                    SeasonRecord = 1,
+                    AllTimeRecord = 1
+                },
+                AccountCurrencyDB = account.Currencies.FirstOrDefault()
+            };
+        }
 
         private EquipmentDB? GetEquipmentDB(long accountServerId, long equipmentServerId)
         {
@@ -106,93 +203,6 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             if (defense == null)
                 return null;
             return Convert(defense);
-        }
-
-        [ProtocolHandler(Protocol.Arena_EnterLobby)]
-        public ResponsePacket EnterLobbyHandler(ArenaEnterLobbyRequest req)
-        {
-            return new ArenaEnterLobbyResponse()
-            {
-                ArenaPlayerInfoDB = new()
-                {
-                    CurrentSeasonId = 6,
-                    PlayerGroupId = 1,
-                    CurrentRank = 1,
-                    SeasonRecord = 1,
-                    AllTimeRecord = 1
-                },
-                OpponentUserDBs = ArenaService.DummyOpponent(GetDefense(req.AccountId)),
-                MapId = 1001
-            };
-        }
-
-        [ProtocolHandler(Protocol.Arena_OpponentList)]
-        public ResponsePacket OpponentListHandler(ArenaOpponentListRequest req)
-        {
-            return new ArenaOpponentListResponse()
-            {
-                PlayerRank = 1,
-                OpponentUserDBs = ArenaService.DummyOpponent(GetDefense(req.AccountId))
-            };
-        }
-
-        [ProtocolHandler(Protocol.Arena_SyncEchelonSettingTime)]
-        public ResponsePacket SyncEchelonSettingTimeHandler(ArenaSyncEchelonSettingTimeRequest req)
-        {
-            return new ArenaSyncEchelonSettingTimeResponse() { EchelonSettingTime = DateTime.Now };
-        }
-
-        [ProtocolHandler(Protocol.Arena_EnterBattlePart1)]
-        public ResponsePacket EnterBattlePart1Handler(ArenaEnterBattlePart1Request req)
-        {
-            var attack = context.Echelons.OrderBy(e => e.ServerId).Last(e =>
-                e.AccountServerId == req.AccountId
-                && e.EchelonType == EchelonType.ArenaAttack
-                && e.EchelonNumber == 1
-                && e.ExtensionType == EchelonExtensionType.Base
-            );
-
-            ArenaUserDB arenaUserDB =
-                new()
-                {
-                    RepresentCharacterUniqueId = 10059,
-                    NickName = "You",
-                    Rank = 1,
-                    Level = 90,
-                    TeamSettingDB = Convert(attack)
-                };
-            return new ArenaEnterBattlePart1Response()
-            {
-                ArenaBattleDB = new()
-                {
-                    Season = 6,
-                    Group = 1,
-                    BattleStartTime = DateTime.Now,
-                    Seed = 1,
-                    AttackingUserDB = arenaUserDB,
-                    DefendingUserDB = ArenaService.DummyOpponent(GetDefense(req.AccountId))[0]
-                }
-            };
-        }
-
-        [ProtocolHandler(Protocol.Arena_EnterBattlePart2)]
-        public ResponsePacket EnterBattlePart2Handler(ArenaEnterBattlePart2Request req)
-        {
-            var account = sessionKeyService.GetAccount(req.SessionKey);
-
-            return new ArenaEnterBattlePart2Response()
-            {
-                ArenaBattleDB = req.ArenaBattleDB,
-                ArenaPlayerInfoDB = new ArenaPlayerInfoDB()
-                {
-                    CurrentSeasonId = 6,
-                    PlayerGroupId = 1,
-                    CurrentRank = 1,
-                    SeasonRecord = 1,
-                    AllTimeRecord = 1
-                },
-                AccountCurrencyDB = account.Currencies.FirstOrDefault()
-            };
         }
     }
 }
