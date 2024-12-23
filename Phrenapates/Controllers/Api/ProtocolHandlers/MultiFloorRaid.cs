@@ -5,6 +5,7 @@ using Plana.MX.NetworkProtocol;
 using Plana.MX.Logic.Battles;
 using Phrenapates.Managers;
 using Plana.FlatData;
+using System.Text.Json;
 
 namespace Phrenapates.Controllers.Api.ProtocolHandlers
 {
@@ -25,18 +26,23 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket SyncHandler(MultiFloorRaidSyncRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
-            var raidList = account.MultiFloorRaids.ToList();
-
+            var raidData = excelTableService.GetExcelList<MultiFloorRaidSeasonManageExcel>("MultiFloorRaidSeasonManageDBSchema")
+            .FirstOrDefault(x => x.SeasonId == account.ContentInfo.MultiFloorRaidDataInfo.SeasonId);
+            var serverTime = DateTime.Parse(raidData.SeasonStartDate).AddDays(1);
+            var db = new MultiFloorRaidDB()
+                {
+                    ServerId = 1,
+                    SeasonId = account.ContentInfo.MultiFloorRaidDataInfo.SeasonId,
+                    ClearedDifficulty = 124,
+                    RewardDifficulty = 124,
+                    LastClearDate = serverTime,
+                    LastRewardDate = serverTime,
+                    TotalReceivedRewards = new(),
+                    TotalReceivableRewards = new()
+                };
             return new MultiFloorRaidSyncResponse()
             {
-                MultiFloorRaidDBs = raidList.Count == 0 ?
-                [new()
-                    {
-                        SeasonId = account.ContentInfo.MultiFloorRaidDataInfo.SeasonId,
-                        ClearedDifficulty = 124,
-                        RewardDifficulty = 124 
-                    }
-                ] : raidList
+                MultiFloorRaidDBs = [db]
             };
         }
 
