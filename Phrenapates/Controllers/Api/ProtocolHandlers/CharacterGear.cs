@@ -25,7 +25,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
-            var gearExcelTable = excelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
+            var gearExcelTable = excelTableService.GetExcelList<CharacterGearExcel>("CharacterGearDBSchema");
             var targetCharacter = account.Characters.FirstOrDefault(x => x.ServerId == req.CharacterServerId);
 
             var gearId = gearExcelTable.FirstOrDefault(x => 
@@ -60,7 +60,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
 
-            var gearExcelTable = excelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
+            var gearExcelTable = excelTableService.GetExcelList<CharacterGearExcel>("CharacterGearDBSchema");
             var targetGear = context.Gears.FirstOrDefault(x => x.ServerId == req.GearServerId);
             var targetCharacter = context.Characters.FirstOrDefault(x => x.ServerId == targetGear.BoundCharacterServerId);
             

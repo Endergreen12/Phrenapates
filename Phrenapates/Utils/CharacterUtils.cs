@@ -15,7 +15,7 @@ namespace Phrenapates.Utils
 
             var weaponExcel = connection.ExcelTableService.GetTable<CharacterWeaponExcelTable>().UnPack().DataList;
             var equipmentExcel = connection.ExcelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
-            var uniqueGearExcel = connection.ExcelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
+            var uniqueGearExcel = connection.ExcelTableService.GetExcelList<CharacterGearExcel>("CharacterGearDBSchema");
 
             bool useOptions = false;
             int starGrade = 3;
@@ -157,7 +157,7 @@ namespace Phrenapates.Utils
             if(useOptions && useGear)
             {
                 var uniqueGear = uniqueGearExcel.First(x => x.Tier == 2 && x.CharacterId == characterId);
-                if (uniqueGear != null)
+                if (uniqueGear.CharacterId != 0)
                 {
                     var uniqueGearDB = new GearDB()
                     {

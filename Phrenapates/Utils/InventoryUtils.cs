@@ -17,7 +17,7 @@ namespace Phrenapates.Utils
             var characterExcel = connection.ExcelTableService.GetTable<CharacterExcelTable>().UnPack().DataList;
             var defaultCharacterExcel = connection.ExcelTableService.GetTable<DefaultCharacterExcelTable>().UnPack().DataList;
             var characterLevelExcel = connection.ExcelTableService.GetTable<CharacterLevelExcelTable>().UnPack().DataList;
-            var favorLevelExcel = connection.ExcelTableService.GetTable<FavorLevelExcelTable>().UnPack().DataList;
+            var favorLevelExcel = connection.ExcelTableService.GetExcelList<FavorLevelExcelTable>("FavorLevelDBSchema");
 
             bool useOptions = false;
             int starGrade = 3;
@@ -267,7 +267,7 @@ namespace Phrenapates.Utils
                 return;
             }
 
-            var uniqueGearExcel = connection.ExcelTableService.GetTable<CharacterGearExcelTable>().UnPack().DataList;
+            var uniqueGearExcel = connection.ExcelTableService.GetExcelList<CharacterGearExcel>("CharacterGearDBSchema");
 
             var uniqueGear = uniqueGearExcel.Where(x => x.Tier == (useGear ? 2 : 1) && context.Characters.Any(y => y.UniqueId == x.CharacterId)).Select(x => 
                 new GearDB()
