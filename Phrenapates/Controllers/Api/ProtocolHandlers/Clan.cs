@@ -81,7 +81,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket AllAssistListHandler(ClanAllAssistListRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
-            var equipmentExcel = excelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
+            /*var equipmentExcel = excelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
             var weaponExcel = excelTableService.GetTable<CharacterWeaponExcelTable>().UnPack().DataList;
             var uniqueGearExcel = excelTableService.GetExcelList<CharacterGearExcel>("CharacterGearDBSchema");
             var characterExcel = excelTableService.GetTable<CharacterExcelTable>().UnPack().DataList.Where(x =>
@@ -174,11 +174,11 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 assistCharData.Add(assistCharacter);
                 fakeAssistServerId++;
                 fakeCharServerId++;
-            }
+            }*/
 
             return new ClanAllAssistListResponse()
             {
-                AssistCharacterDBs = assistCharData,
+                AssistCharacterDBs = new(), //assistCharData,
                 AssistCharacterRentHistoryDBs = []
             };
         }
