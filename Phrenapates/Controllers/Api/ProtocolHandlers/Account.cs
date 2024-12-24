@@ -70,6 +70,8 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
                 {
                     CurrentVersion = req.Version,
                     AccountDB = account,
+                    BattleValidation = true,
+                    IssueAlertInfos = [],
                     StaticOpenConditions = new()
                     {
                         { OpenConditionContent.Shop, OpenConditionLockReason.None },
