@@ -12,7 +12,7 @@ namespace Phrenapates.Utils
 
         public string IRCAddress { get; set; } = "127.0.0.1";
         public int IRCPort { get; set; } = 6667;
-        public string VersionId { get; set; } = "r74_c43tmk8o85er8xdapffq";
+        public string VersionId { get; set; } = "r75_49ajrpwcziy395uuk0jq_2";
 
         private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
         public static void Load()
