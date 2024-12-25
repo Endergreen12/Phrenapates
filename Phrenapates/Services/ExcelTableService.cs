@@ -122,7 +122,7 @@ namespace Phrenapates.Services
             return (T)inst!;
         }
 
-        public List<T> GetExcelList<T>(string schema, bool bypassCache = false)
+        /*public List<T> GetExcelDB<T>(string schema = "", bool bypassCache = false)
         {
             var excelList = new List<T>();
             var type = typeof(T);
@@ -139,7 +139,7 @@ namespace Phrenapates.Services
                 while (reader.Read())
                 {
                     excelList.Add((T)type.GetMethod($"GetRootAs{type.Name}", BindingFlags.Static | BindingFlags.Public, [typeof(ByteBuffer)])!
-                        .Invoke(null, [new ByteBuffer((byte[])reader[0])]));
+                        .Invoke(null, new object[] { new ByteBuffer((byte[])reader[0]) }));
                 }
             }
 
@@ -147,6 +147,77 @@ namespace Phrenapates.Services
             logger.LogDebug("{Excel} loaded and cached", type.Name);
 
             return excelList;
+        }*/
+
+        public List<T> GetExcelDB<T>() where T : struct, IFlatbufferObject
+        {
+            var excelList = new List<T>();
+            var type = typeof(T);
+
+            string schema = type.Name.Replace("Excel", "DBSchema");
+
+            using (var dbConnection = new SQLiteConnection($"Data Source = {Path.Join(resourceDir, "ExcelDB.db")}"))
+            {
+                dbConnection.Open();
+                var command = dbConnection.CreateCommand();
+                command.CommandText = $"SELECT Bytes FROM {schema}";
+                
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var byteBuffer = new ByteBuffer((byte[])reader["Bytes"]);
+                    var flatBufferObject = (T)type.GetMethod($"GetRootAs{type.Name}", BindingFlags.Static | BindingFlags.Public, [typeof(ByteBuffer)])!
+                        .Invoke(null, new object[] { byteBuffer });
+                    
+                    excelList.Add(flatBufferObject);
+                }
+            }
+
+            logger.LogDebug("{Schema} data loaded", schema);
+            return excelList;
+        }
+
+        public T GetExcelDBID<T>(object id) where T : struct, IFlatbufferObject
+        {
+            var type = typeof(T);
+            string schema = type.Name.Replace("Excel", "DBSchema");
+
+            var dbSchemaType = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(a => a.GetTypes())
+            .FirstOrDefault(t => t.Name == schema);
+            
+            if(dbSchemaType == null) throw new InvalidOperationException($"No properties found on type {dbSchemaType.Name}.");
+
+            var identifierProperty = dbSchemaType
+                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault()
+                ?? throw new InvalidOperationException($"No properties found on type {dbSchemaType.Name}.");
+
+            var identifierName = identifierProperty.Name;
+
+            T result = default(T);
+
+            using (var dbConnection = new SQLiteConnection($"Data Source = {Path.Join(resourceDir, "ExcelDB.db")}"))
+            {
+                dbConnection.Open();
+                var command = dbConnection.CreateCommand();
+                command.CommandText = $"SELECT Bytes FROM {schema} WHERE {identifierName} = @Id";
+                command.Parameters.AddWithValue("@Id", id);
+
+                using var reader = command.ExecuteReader();
+                if (reader.Read())
+                {
+                    var byteBuffer = new ByteBuffer((byte[])reader["Bytes"]);
+                    var getRootMethod = type.GetMethod($"GetRootAs{type.Name}", BindingFlags.Static | BindingFlags.Public, [typeof(ByteBuffer)])
+                    ?? throw new InvalidOperationException($"Method GetRootAs{type.Name} not found for type {type.Name}");
+
+                    result = (T)getRootMethod.Invoke(null, new object[] { byteBuffer });
+                }
+            }
+
+            logger.LogDebug("{Schema} data with {IdName} = {IdValue} loaded", schema, identifierName, id);
+
+            return result;
         }
     }
 

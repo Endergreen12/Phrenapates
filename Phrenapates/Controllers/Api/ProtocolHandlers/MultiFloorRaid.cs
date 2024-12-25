@@ -26,8 +26,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
         public ResponsePacket SyncHandler(MultiFloorRaidSyncRequest req)
         {
             var account = sessionKeyService.GetAccount(req.SessionKey);
-            var raidData = excelTableService.GetExcelList<MultiFloorRaidSeasonManageExcel>("MultiFloorRaidSeasonManageDBSchema")
-            .FirstOrDefault(x => x.SeasonId == account.ContentInfo.MultiFloorRaidDataInfo.SeasonId);
+            var raidData = excelTableService.GetExcelDBID<MultiFloorRaidSeasonManageExcel>(account.ContentInfo.MultiFloorRaidDataInfo.SeasonId);
             var serverTime = DateTime.Parse(raidData.SeasonStartDate).AddDays(1);
             var db = new MultiFloorRaidDB()
                 {

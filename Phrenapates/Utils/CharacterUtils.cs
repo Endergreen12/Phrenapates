@@ -15,7 +15,7 @@ namespace Phrenapates.Utils
 
             var weaponExcel = connection.ExcelTableService.GetTable<CharacterWeaponExcelTable>().UnPack().DataList;
             var equipmentExcel = connection.ExcelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
-            var uniqueGearExcel = connection.ExcelTableService.GetExcelList<CharacterGearExcel>("CharacterGearDBSchema");
+            var uniqueGearExcel = connection.ExcelTableService.GetExcelDB<CharacterGearExcel>();
 
             bool useOptions = false;
             int starGrade = 3;

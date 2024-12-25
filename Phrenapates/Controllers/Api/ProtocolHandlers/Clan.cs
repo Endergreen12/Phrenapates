@@ -83,7 +83,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
             var account = sessionKeyService.GetAccount(req.SessionKey);
             /*var equipmentExcel = excelTableService.GetTable<EquipmentExcelTable>().UnPack().DataList;
             var weaponExcel = excelTableService.GetTable<CharacterWeaponExcelTable>().UnPack().DataList;
-            var uniqueGearExcel = excelTableService.GetExcelList<CharacterGearExcel>("CharacterGearDBSchema");
+            var uniqueGearExcel = excelTableService.GetExcelDB<CharacterGearExcel>();
             var characterExcel = excelTableService.GetTable<CharacterExcelTable>().UnPack().DataList.Where(x =>
                 x is
                 {

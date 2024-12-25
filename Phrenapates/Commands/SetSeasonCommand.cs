@@ -127,7 +127,7 @@ namespace Phrenapates.Commands
                 case "multifloorraid":
                     if (long.TryParse(value, out seasonId))
                     {
-                        var multiFloorRaidSeason = connection.ExcelTableService.GetExcelList<MultiFloorRaidSeasonManageExcel>("MultiFloorRaidSeasonManageDBSchema");
+                        var multiFloorRaidSeason = connection.ExcelTableService.GetExcelDB<MultiFloorRaidSeasonManageExcel>();
                         var multiFloorRaidData = multiFloorRaidSeason.FirstOrDefault(x => x.SeasonId == seasonId);
                         if(!multiFloorRaidSeason.Any(x => x.SeasonId == seasonId))
                         {

@@ -17,7 +17,7 @@ namespace Phrenapates.Utils
             var characterExcel = connection.ExcelTableService.GetTable<CharacterExcelTable>().UnPack().DataList;
             var defaultCharacterExcel = connection.ExcelTableService.GetTable<DefaultCharacterExcelTable>().UnPack().DataList;
             var characterLevelExcel = connection.ExcelTableService.GetTable<CharacterLevelExcelTable>().UnPack().DataList;
-            var favorLevelExcel = connection.ExcelTableService.GetExcelList<FavorLevelExcelTable>("FavorLevelDBSchema");
+            var favorLevelExcel = connection.ExcelTableService.GetExcelDB<FavorLevelExcelTable>();
 
             bool useOptions = false;
             int starGrade = 3;
@@ -267,7 +267,7 @@ namespace Phrenapates.Utils
                 return;
             }
 
-            var uniqueGearExcel = connection.ExcelTableService.GetExcelList<CharacterGearExcel>("CharacterGearDBSchema");
+            var uniqueGearExcel = connection.ExcelTableService.GetExcelDB<CharacterGearExcel>();
 
             var uniqueGear = uniqueGearExcel.Where(x => x.Tier == (useGear ? 2 : 1) && context.Characters.Any(y => y.UniqueId == x.CharacterId)).Select(x => 
                 new GearDB()
@@ -292,7 +292,7 @@ namespace Phrenapates.Utils
             var account = connection.Account;
             var context = connection.Context;
 
-            var memoryLobbyExcel = connection.ExcelTableService.GetExcelList<MemoryLobbyExcel>("MemoryLobbyDBSchema");
+            var memoryLobbyExcel = connection.ExcelTableService.GetExcelDB<MemoryLobbyExcel>();
             var allMemoryLobbies = memoryLobbyExcel
             .Where(x => !account.MemoryLobbies.Any(y => y != null && y.MemoryLobbyUniqueId == x.Id))
             .Select(x =>
@@ -313,7 +313,7 @@ namespace Phrenapates.Utils
             var account = connection.Account;
             var context = connection.Context;
 
-            var scenarioModeExcel = connection.ExcelTableService.GetExcelList<ScenarioModeExcel>("ScenarioModeDBSchema");
+            var scenarioModeExcel = connection.ExcelTableService.GetExcelDB<ScenarioModeExcel>();
             var normalScenario = scenarioModeExcel
             .Where(x => !account.Scenarios.Any(y => y != null && y.ScenarioUniqueId == x.ModeId))
             .Select(x =>

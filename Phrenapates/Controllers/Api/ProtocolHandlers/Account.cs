@@ -2,6 +2,7 @@
 using Plana.Database;
 using Plana.Database.ModelExtensions;
 using Plana.FlatData;
+using Plana.MX.Data.Excel;
 using Plana.MX.GameLogic.DBModel;
 using Plana.MX.GameLogic.Parcel;
 using Plana.MX.GameLogic.Services;
@@ -337,7 +338,7 @@ namespace Phrenapates.Controllers.Api.ProtocolHandlers
 			
             // Mails
             var defaultMails = excelTableService.GetTable<DefaultMailExcelTable>().UnPack().DataList;
-            var localizeExcel = excelTableService.GetExcelList<LocalizeExcel>("LocalizeDBSchema");
+            var localizeExcel = excelTableService.GetExcelDB<LocalizeExcel>();
 
             foreach(var defaultMail in defaultMails)
             {
