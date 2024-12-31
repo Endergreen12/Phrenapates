@@ -20,13 +20,16 @@ namespace Phrenapates.Services
             var versionTxtPath = Path.Combine(resourceDir, "version.txt");
 
 #if DEBUG
-                var dumpDir = Path.Join(Path.GetDirectoryName(AppContext.BaseDirectory), "dumped");
+                var excelDump = Path.Combine(resourceDir, "Dumped/Excel");
+                var excelDbDump = Path.Combine(resourceDir,"Dumped/ExcelDB");
                 var excelDir = Path.Combine(resourceDir, "Excel");
-                var excelDbDir = Path.Join(resourceDir, "ExcelDB.db");
-                if(!Directory.Exists(dumpDir) && Directory.Exists(excelDir) && File.Exists(excelDbDir))
+                var excelDbDir = Path.Combine(resourceDir, "ExcelDB.db");
+                if(!Directory.Exists(excelDump) && !Directory.Exists(excelDbDump) && Directory.Exists(excelDir) && File.Exists(excelDbDir))
                 {
-                    Directory.CreateDirectory(dumpDir);
-                    TableService.DumpExcels(excelDir, excelDbDir, dumpDir);   
+                    Directory.CreateDirectory(excelDump);
+                    Directory.CreateDirectory(excelDbDump);
+                    TableService.DumpExcels(excelDir, excelDbDir, excelDump);   
+                    TableService.DumpExcelDB(excelDbDir, excelDbDump);
                 }
 #endif
 
