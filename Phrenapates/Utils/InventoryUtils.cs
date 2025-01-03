@@ -17,7 +17,7 @@ namespace Phrenapates.Utils
             var characterExcel = connection.ExcelTableService.GetTable<CharacterExcelTable>().UnPack().DataList;
             var defaultCharacterExcel = connection.ExcelTableService.GetTable<DefaultCharacterExcelTable>().UnPack().DataList;
             var characterLevelExcel = connection.ExcelTableService.GetTable<CharacterLevelExcelTable>().UnPack().DataList;
-            var favorLevelExcel = connection.ExcelTableService.GetExcelDB<FavorLevelExcelTable>();
+            var favorLevelExcel = connection.ExcelTableService.GetExcelDB<FavorLevelExcel>();
 
             bool useOptions = false;
             int starGrade = 3;
